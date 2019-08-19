@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26730.16
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GMS.Lib.DataAccess", "GMS.Lib.DataAccess\GMS.Lib.DataAccess.csproj", "{07A0B534-0DE1-47A1-B27B-B41A7E338503}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Preproduction|Any CPU = Preproduction|Any CPU
+		Preproduction|x64 = Preproduction|x64
+		Preproduction|x86 = Preproduction|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{07A0B534-0DE1-47A1-B27B-B41A7E338503}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{07A0B534-0DE1-47A1-B27B-B41A7E338503}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{07A0B534-0DE1-47A1-B27B-B41A7E338503}.Debug|x64.ActiveCfg = Debug|x64
+		{07A0B534-0DE1-47A1-B27B-B41A7E338503}.Debug|x64.Build.0 = Debug|x64
+		{07A0B534-0DE1-47A1-B27B-B41A7E338503}.Debug|x86.ActiveCfg = Debug|x86
+		{07A0B534-0DE1-47A1-B27B-B41A7E338503}.Debug|x86.Build.0 = Debug|x86
+		{07A0B534-0DE1-47A1-B27B-B41A7E338503}.Preproduction|Any CPU.ActiveCfg = Preproduction|Any CPU
+		{07A0B534-0DE1-47A1-B27B-B41A7E338503}.Preproduction|Any CPU.Build.0 = Preproduction|Any CPU
+		{07A0B534-0DE1-47A1-B27B-B41A7E338503}.Preproduction|x64.ActiveCfg = Preproduction|x64
+		{07A0B534-0DE1-47A1-B27B-B41A7E338503}.Preproduction|x64.Build.0 = Preproduction|x64
+		{07A0B534-0DE1-47A1-B27B-B41A7E338503}.Preproduction|x86.ActiveCfg = Preproduction|x86
+		{07A0B534-0DE1-47A1-B27B-B41A7E338503}.Preproduction|x86.Build.0 = Preproduction|x86
+		{07A0B534-0DE1-47A1-B27B-B41A7E338503}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{07A0B534-0DE1-47A1-B27B-B41A7E338503}.Release|Any CPU.Build.0 = Release|Any CPU
+		{07A0B534-0DE1-47A1-B27B-B41A7E338503}.Release|x64.ActiveCfg = Release|x64
+		{07A0B534-0DE1-47A1-B27B-B41A7E338503}.Release|x64.Build.0 = Release|x64
+		{07A0B534-0DE1-47A1-B27B-B41A7E338503}.Release|x86.ActiveCfg = Release|x86
+		{07A0B534-0DE1-47A1-B27B-B41A7E338503}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {73976D85-E87E-47F9-AF54-4D3F7C06910C}
+	EndGlobalSection
+EndGlobal

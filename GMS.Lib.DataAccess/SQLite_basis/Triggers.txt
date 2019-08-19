@@ -1,0 +1,59 @@
+﻿Listing TRIGGERS
+Notas: Los nombres de los triggers no pueden tener guiones, todo subrayados.
+
+=======================================================================
+#Trigger que sólo se ejectua a funcionar cuando se actualiza el campo GMSFIMCFM_FX_END_TIME de la tabla GMSFIMCFM_CONFIGURATION_FILE_MAINTENANCE
+(AFTER UPDATE OF GMSFIMCFM_FX_END_TIME ON GMSFIMCFM_CONFIGURATION_FILE_MAINTENANCE)
+
+CREATE TRIGGER TRIG_UPDATE_GMSFIMCFM_CO_DURATION AFTER UPDATE OF GMSFIMCFM_FX_END_TIME ON GMSFIMCFM_CONFIGURATION_FILE_MAINTENANCE
+FOR EACH ROW
+BEGIN
+	UPDATE GMSFIMCFM_CONFIGURATION_FILE_MAINTENANCE
+	SET  GMSFIMCFM_CO_DURATION  = ( strftime('%s', new.GMSFIMCFM_FX_END_TIME) - strftime('%s',old.GMSFIMCFM_FX_START_TIME) )
+	where GMSFIMCFM_CO_CFM_ID = old.GMSFIMCFM_CO_CFM_ID;
+
+
+END;
+=======================================================================
+#Trigger que se ejectua siempre que se actualiza algo en la tabla GMSFIMCFM_CONFIGURATION_FILE_MAINTENANCE
+(AFTER UPDATE ON GMSFIMCFM_CONFIGURATION_FILE_MAINTENANCE)
+CREATE TRIGGER TRIG_UPDATE_GMSFIMCFM_CO_DURATION AFTER UPDATE ON GMSFIMCFM_CONFIGURATION_FILE_MAINTENANCE
+FOR EACH ROW
+BEGIN
+	UPDATE GMSFIMCFM_CONFIGURATION_FILE_MAINTENANCE
+	SET  GMSFIMCFM_CO_DURATION  = ( strftime('%s', new.GMSFIMCFM_FX_END_TIME) - strftime('%s',old.GMSFIMCFM_FX_START_TIME) )
+	where GMSFIMCFM_CO_CFM_ID = old.GMSFIMCFM_CO_CFM_ID;
+END;
+=======================================================================
+
+
+You can list down all the triggers from sqlite_master table as follows:
+SELECT name FROM sqlite_master
+WHERE type = 'trigger';
+----------------------------------------
+If you want to list down triggers on a particular table, then use AND clause with table name as follows:
+
+sqlite> SELECT name FROM sqlite_master
+WHERE type = 'trigger' AND tbl_name = 'COMPANY';
+----------------------------------------
+Dropping TRIGGERS
+Following is the DROP command, which can be used to drop an existing trigger:
+sqlite> DROP TRIGGER trigger_name
+
+----------------------------------------
+CREATE TRIGGER audit_log AFTER INSERT 
+ON COMPANY
+BEGIN
+   INSERT INTO AUDIT(EMP_ID, ENTRY_DATE) VALUES (new.ID, datetime('now'));
+END;
+----------------------------------------
+Some Example Triggers
+Assuming that customer records are stored in the "customers" table, and that order records are stored in the "orders" table, the following UPDATE trigger ensures that all associated orders are redirected when a customer changes his or her address:
+    CREATE TRIGGER update_customer_address UPDATE OF address ON customers 
+      BEGIN
+        UPDATE orders SET address = new.address WHERE customer_name = old.name;
+      END;
+With this trigger installed, executing the statement:
+    UPDATE customers SET address = '1 Main St.' WHERE name = 'Jack Jones';
+causes the following to be automatically executed:
+    UPDATE orders SET address = '1 Main St.' WHERE customer_name = 'Jack Jones';

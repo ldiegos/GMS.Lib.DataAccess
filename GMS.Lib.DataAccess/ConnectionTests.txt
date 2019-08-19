@@ -1,0 +1,3 @@
+data source=C:\Users\800xAService\AppData\Local\GeMeSoft\WIA_FILE_MAINTENANCE.vsho_Url_jkkrupol23jqgax5y01tiasu0ftplwk3\1.0.0.0\DataBase\FILE_MAINTENANCE.sqlite;Foreign Keys=True;Pooling=True
+data source=C:\Users\800xAService\AppData\Local\GeMeSoft\WIA_FILE_MAINTENANCE.vsho_Url_jkkrupol23jqgax5y01tiasu0ftplwk3\1.0.0.0\DataBase\\FILE_MAINTENANCE.sqlite;Compress=True;synchronous=Normal;foreign keys=True;journal mode=truncate;pooling=True;Default Isolation Level=ReadCommitted
+data source=C:\Users\800xAService\AppData\Local\GeMeSoft\WIA_FILE_MAINTENANCE.vsho_Url_jkkrupol23jqgax5y01tiasu0ftplwk3\1.0.0.0\DataBase\FILE_MAINTENANCE.sqlite;Compress=True;synchronous=Off;foreign keys=True;pooling=True;Journal Mode=Wal;Default Isolation Level=ReadCommitted

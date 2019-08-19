@@ -1,0 +1,20 @@
+﻿1.0.0.4 - 2019/08/18:
+-Mejora de las reconexiones y creados los métodos de creación de una base de datos access.
+-------------------------------------------------------
+-Reconnection improvements and MSAccess database creation methods.
+========================================================================================================
+1.0.0.3 - 2019/01/01:
+-Modificada las librerías para realizar reintentos.
+-------------------------------------------------------
+-Modified the library to make reconnections and retry the executions of query/commands.
+========================================================================================================
+1.0.0.2 - 2018/02/04:
+-Modificada las librerías para devolver una excepción de "NotImplementedException" para las funciones que no pertenecen a cada libería.
+-------------------------------------------------------
+-Modified the library to return a "NotImplementedException" for the functions that not belongs to each class.
+========================================================================================================
+1.0.0.1 - 2016/05/01:
+-Modificada la librería de SQLite para usar un semáforo a la hora de actualizar la base de datos.
+-------------------------------------------------------
+-Modified the library to use semaphores when the datatabase is update.
+
