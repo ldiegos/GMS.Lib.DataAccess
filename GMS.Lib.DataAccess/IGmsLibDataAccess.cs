@@ -13,12 +13,12 @@ namespace GMS.LIB.DataAccess
     /// <summary>
     /// 
     /// </summary>
-    public interface IGmsLibDataAccess
+    public interface IGmsLibDataAccess: IDisposable
     {
         /// <summary>
         /// 
         /// </summary>
-        void Dispose();
+        string GetError { get; }
 
         /// <summary>
         /// Open the conexion to the configured database. This method is valid to SQLServer, SQLite and MSAccess.
@@ -47,7 +47,7 @@ namespace GMS.LIB.DataAccess
         /// <summary>
         /// This method is not develope, the fact is that with the Execute and ExecuteStandAlone, is it possible to query almost everything.
         /// </summary>
-        /// <param name="strSQLExec"></param>
+        /// <param name="strSqlExec"></param>
         /// <param name="queryResult"></param>
         /// <returns></returns>
         bool ExecuteSqlQuery(string strSqlExec, out string queryResult);
@@ -63,6 +63,16 @@ namespace GMS.LIB.DataAccess
         bool Execute(string query, ref DataTable datatable, out string queryResult);
 
         /// <summary>
+        /// This method will execute a string query into the configured database. The method need an previouly opened connection.
+        /// The result will be stored in a DataSet
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="dataset"></param>
+        /// <param name="queryResult"></param>
+        /// <returns></returns>
+        bool Execute(string query, ref DataSet dataset, out string queryResult);
+
+        /// <summary>
         /// This method will execute a SQL command into the configured database. The method need an previouly opened connection.
         /// The result will be stored in a DataTable
         /// </summary>
@@ -71,6 +81,16 @@ namespace GMS.LIB.DataAccess
         /// <param name="queryResult">Normally filled with error</param>
         /// <returns></returns>
         bool Execute(SqlCommand sqlCommand, ref DataTable datatable, out string queryResult);
+
+        /// <summary>
+        /// This method will execute a SQL command into the configured database. The method need an previouly opened connection.
+        /// The result will be stored in a DataSet
+        /// </summary>
+        /// <param name="sqlCommand"></param>
+        /// <param name="dataset"></param>
+        /// <param name="queryResult"></param>
+        /// <returns></returns>
+        bool Execute(SqlCommand sqlCommand, ref DataSet dataset, out string queryResult);
 
         /// <summary>
         /// This method will execute a OLDEDB command into the configured database. The method need an previouly opened connection.
@@ -83,6 +103,16 @@ namespace GMS.LIB.DataAccess
         bool Execute(OleDbCommand sqlCommand, ref DataTable datatable, out string queryResult);
 
         /// <summary>
+        /// This method will execute a OLDEDB command into the configured database. The method need an previouly opened connection.
+        /// The result will be stored in a DataSet
+        /// </summary>
+        /// <param name="sqlCommand"></param>
+        /// <param name="dataset"></param>
+        /// <param name="queryResult"></param>
+        /// <returns></returns>
+        bool Execute(OleDbCommand sqlCommand, ref DataSet dataset, out string queryResult);
+
+        /// <summary>
         /// This method will execute a SQLite command into the configured database. The method need an previouly opened connection.
         /// The result will be stored in a DataTable
         /// </summary>
@@ -93,6 +123,16 @@ namespace GMS.LIB.DataAccess
         bool Execute(SQLiteCommand sqlCommand, ref DataTable datatable, out string queryResult);
 
         /// <summary>
+        /// This method will execute a SQLite command into the configured database. The method need an previouly opened connection.
+        /// The result will be stored in a DataSet
+        /// </summary>
+        /// <param name="sqlCommand"></param>
+        /// <param name="dataset"></param>
+        /// <param name="queryResult"></param>
+        /// <returns></returns>
+        bool Execute(SQLiteCommand sqlCommand, ref DataSet dataset, out string queryResult);
+
+        /// <summary>
         /// This method will execute a string query into the configured database. The method will open a connection to database and close when finished.
         /// The result will be stored in a DataTable
         /// </summary>
@@ -101,6 +141,16 @@ namespace GMS.LIB.DataAccess
         /// <param name="queryResult">Normally filled with error</param>
         /// <returns></returns>
         bool ExecuteStandAlone(string query, ref DataTable datatable, out string queryResult);
+        
+        /// <summary>
+        /// This method will execute a string query into the configured database. The method will open a connection to database and close when finished.
+        /// The result will be stored in a DataSet
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="dataset"></param>
+        /// <param name="queryResult"></param>
+        /// <returns></returns>
+        bool ExecuteStandAlone(string query, ref DataSet dataset, out string queryResult);
 
         /// <summary>
         /// This method will execute a SQL command into the configured database. The method will open a connection to database and close when finished.
@@ -133,6 +183,16 @@ namespace GMS.LIB.DataAccess
         bool ExecuteStandAlone(OleDbCommand sqlCommand, ref DataTable datatable, out string queryResult);
 
         /// <summary>
+        /// This method will execute a OLEDB command into the configured database. The method will open a connection to database and close when finished.
+        /// The result will be stored in a DataSet
+        /// </summary>
+        /// <param name="sqlCommand"></param>
+        /// <param name="dataset"></param>
+        /// <param name="queryResult"></param>
+        /// <returns></returns>
+        bool ExecuteStandAlone(OleDbCommand sqlCommand, ref DataSet dataset, out string queryResult);
+
+        /// <summary>
         /// This method will execute a SQLite command into the configured database. The method will open a connection to database and close when finished.
         /// The result will be stored in a DataTable
         /// </summary>
@@ -163,7 +223,8 @@ namespace GMS.LIB.DataAccess
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="strConnectionString"></param>
         /// <param name="queryResult"></param>
-        void ForceDataBaseUpdate(out string queryResult);
+        void ForceDataBaseUpdate(string strConnectionString, out string queryResult);            
     }
 }

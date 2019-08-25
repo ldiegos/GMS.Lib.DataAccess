@@ -23,7 +23,7 @@ namespace GMS.LIB.DataAccess
     /// <summary>
     /// Summary description for ClsBD
     /// </summary>
-    public class GmsLibDataAcessSqlite : IGmsLibDataAccess, IDisposable
+    public class GmsLibDataAcessSqlite : IGmsLibDataAccess
     {
         // Flag: Has Dispose already been called?
         bool _disposed = false;
@@ -35,7 +35,7 @@ namespace GMS.LIB.DataAccess
         /// <summary>
         /// 
         /// </summary>
-        private string CadenaError { get; set; }
+        private string _error;
 
         /// <summary>
         /// 
@@ -67,7 +67,6 @@ namespace GMS.LIB.DataAccess
         private bool CreateDatabase(string strConnectionString)
         {
             bool bolResultadoFn = false;
-            string[] arrConnectionString;
             string strDataBasePath = "";
 
             bool isFound = SearchElementInConnectionString(strConnectionString, "data source", ref strDataBasePath);
@@ -82,7 +81,7 @@ namespace GMS.LIB.DataAccess
                 if (bolResultadoFn)
                 {
                     string strResult = "";
-                    ForceDataBaseUpdate(out strResult);
+                    ForceDataBaseUpdate(strConnectionString, out strResult);
                 }
             }
             else
@@ -93,150 +92,11 @@ namespace GMS.LIB.DataAccess
             return bolResultadoFn;
 
         }
-        
-        //private void CheckResult(string query, ref DataTable dt, ref string queryResult, ref bool salida)
-        //{
-        //    string patterMatched = string.Empty;
 
-        //    if (TimeOuts.CheckTimeout(queryResult, out patterMatched))
-        //    {
-        //        if (_countExcecutionTries <= NumberMaxExecutionTries)
-        //        {
-        //            _countExcecutionTries++;
-        //            System.Threading.Thread.Sleep(WaitExecutionMillisecondsTimeout);
-        //            salida = ExecuteStandAlone(query, ref dt, out queryResult);
-        //        }
-        //        else
-        //        {
-        //            queryResult += "#Number of retries exceed: " + NumberMaxExecutionTries;
-        //            salida = false;
-        //        }
-        //    }
-        //}
-
-        //private void CheckResult(string query, ref DataSet ds, ref string queryResult, ref bool salida)
-        //{
-        //    string patterMatched = string.Empty;
-
-        //    if (TimeOuts.CheckTimeout(queryResult, out patterMatched))
-        //    {
-        //        if (_countExcecutionTries <= NumberMaxExecutionTries)
-        //        {
-        //            _countExcecutionTries++;
-        //            System.Threading.Thread.Sleep(WaitExecutionMillisecondsTimeout);
-        //            salida = ExecuteStandAlone(query, ref ds, out queryResult);
-        //        }
-        //        else
-        //        {
-        //            queryResult += "#Number of retries exceed: " + NumberMaxExecutionTries;
-        //            salida = false;
-        //        }
-        //    }
-        //}
-        
-        //private void CheckResult(SqlCommand sqlCommand, ref DataTable dt, ref string queryResult, ref bool salida)
-        //{
-        //    string patterMatched = string.Empty;
-
-        //    if (TimeOuts.CheckTimeout(queryResult, out patterMatched))
-        //    {
-        //        if (_countExcecutionTries <= NumberMaxExecutionTries)
-        //        {
-        //            _countExcecutionTries++;
-        //            System.Threading.Thread.Sleep(WaitExecutionMillisecondsTimeout);
-        //            salida = ExecuteStandAlone(sqlCommand, ref dt, out queryResult);
-        //        }
-        //        else
-        //        {
-        //            queryResult += "#Number of retries exceed: " + NumberMaxExecutionTries;
-        //            salida = false;
-        //        }
-        //    }
-        //}
-
-        //private void CheckResult(SqlCommand sqlCommand, ref DataSet ds, ref string queryResult, ref bool salida)
-        //{
-        //    string patterMatched = string.Empty;
-
-        //    if (TimeOuts.CheckTimeout(queryResult, out patterMatched))
-        //    {
-        //        if (_countExcecutionTries <= NumberMaxExecutionTries)
-        //        {
-        //            _countExcecutionTries++;
-        //            System.Threading.Thread.Sleep(WaitExecutionMillisecondsTimeout);
-        //            salida = ExecuteStandAlone(sqlCommand, ref ds, out queryResult);
-        //        }
-        //        else
-        //        {
-        //            queryResult += "#Number of retries exceed: " + NumberMaxExecutionTries;
-        //            salida = false;
-        //        }
-        //    }
-        //}
-
-        //private void CheckResult(OleDbCommand sqlCommand, ref DataTable dt, ref string queryResult, ref bool salida)
-        //{
-        //    string patterMatched = string.Empty;
-
-        //    if (TimeOuts.CheckTimeout(queryResult, out patterMatched))
-        //    {
-        //        if (_countExcecutionTries <= NumberMaxExecutionTries)
-        //        {
-        //            _countExcecutionTries++;
-        //            System.Threading.Thread.Sleep(WaitExecutionMillisecondsTimeout);
-        //            salida = ExecuteStandAlone(sqlCommand, ref dt, out queryResult);
-        //        }
-        //        else
-        //        {
-        //            queryResult += "#Number of retries exceed: " + NumberMaxExecutionTries;
-        //            salida = false;
-        //        }
-        //    }
-        //}
-        
-        //private void CheckResult(SQLiteCommand sqlCommand, ref DataTable dt, ref string queryResult, ref bool salida)
-        //{
-        //    string patterMatched = string.Empty;
-
-        //    if (TimeOuts.CheckTimeout(queryResult, out patterMatched))
-        //    {
-        //        if (_countExcecutionTries <= NumberMaxExecutionTries)
-        //        {
-        //            _countExcecutionTries++;
-        //            System.Threading.Thread.Sleep(WaitExecutionMillisecondsTimeout);
-        //            salida = ExecuteStandAlone(sqlCommand, ref dt, out queryResult);
-        //        }
-        //        else
-        //        {
-        //            queryResult += "#Number of retries exceed: " + NumberMaxExecutionTries;
-        //            salida = false;
-        //        }
-        //    }
-        //}
-
-        //private void CheckResult(SQLiteCommand sqlCommand, ref DataSet ds, ref string queryResult, ref bool salida)
-        //{
-        //    string patterMatched = string.Empty;
-
-        //    if (TimeOuts.CheckTimeout(queryResult, out patterMatched))
-        //    {
-        //        if (_countExcecutionTries <= NumberMaxExecutionTries)
-        //        {
-        //            _countExcecutionTries++;
-        //            System.Threading.Thread.Sleep(WaitExecutionMillisecondsTimeout);
-        //            salida = ExecuteStandAlone(sqlCommand, ref ds, out queryResult);
-        //        }
-        //        else
-        //        {
-        //            queryResult += "#Number of retries exceed: " + NumberMaxExecutionTries;
-        //            salida = false;
-        //        }
-        //    }
-        //}
-
-        private void CheckResult(string queryResult, ref bool salida)
+        private void CheckResult(string queryResult, out bool timeoutPatterIsFound)
         {
             string patterMatched = string.Empty;
+            timeoutPatterIsFound = false;
 
             if (TimeOuts.CheckTimeout(queryResult, out patterMatched))
             {
@@ -244,42 +104,30 @@ namespace GMS.LIB.DataAccess
                 {
                     _countExcecutionTries++;
                     System.Threading.Thread.Sleep(WaitExecutionMillisecondsTimeout);
-                    salida = true;
+                    timeoutPatterIsFound = true;
                 }
                 else
                 {
                     queryResult += "#Number of retries exceed: " + NumberMaxExecutionTries;
-                    salida = false;
+                    timeoutPatterIsFound = false;
                 }
             }
         }
 
-
-
-            /// <summary>
-            /// FUNCION: private bool fnTestDataBase(string strConnectionString)
-            ///      Funcion privada. 
-            ///      Función que comprueba si existe la base de datos de auditoría.
-            /// </summary>
-            /// <param name="strConnectionString">Type string - Cadena completa de conexión con la base de datos.</param>
-            /// <returns>Devuelve true/false en función de la existencia de la base de datos.</returns>
-            private bool FnTestDataBase(string strConnectionString)
+        /// <summary>
+        /// FUNCION: private bool fnTestDataBase(string strConnectionString)
+        ///      Funcion privada. 
+        ///      Función que comprueba si existe la base de datos de auditoría.
+        /// </summary>
+        /// <param name="strConnectionString">Type string - Cadena completa de conexión con la base de datos.</param>
+        /// <returns>Devuelve true/false en función de la existencia de la base de datos.</returns>
+        private bool FnTestDataBase(string strConnectionString)
         {
             string[] arrConnectionString;
             string strDataBasePath = "";
             string strResultadoFn = "";
             bool bolResultadoFn = false;
             arrConnectionString = strConnectionString.Split(';');
-
-            //foreach (string strConnection in arrConnectionString)
-            //{
-            //    if (strConnection != "" && strConnection.Length >= "data source=".Length && strConnection.Substring(0, 12).ToUpper() == "data source=".ToUpper())
-            //    {
-            //        string[] arrDataSource;
-            //        arrDataSource = strConnection.Split('=');
-            //        strDataBasePath = arrDataSource[1];
-            //    }
-            //}
 
             bool isFound = SearchElementInConnectionString(strConnectionString, "data source", ref strDataBasePath);
 
@@ -295,26 +143,6 @@ namespace GMS.LIB.DataAccess
             return bolResultadoFn;
 
         }
-
-        //private string FnExtractDatabasePathFromConnectionString(string strConnectionString)
-        //{
-        //    string[] arrConnectionString;
-        //    string strDataBasePath = "";
-
-        //    arrConnectionString = strConnectionString.Split(';');
-
-        //    foreach (string strConnection in arrConnectionString)
-        //    {
-        //        if (strConnection != "" && (strConnection.Length >= "data source=".Length && strConnection.Substring(0, 12).ToUpper() == "data source=".ToUpper()))
-        //        {
-        //            string[] arrDataSource;
-        //            arrDataSource = strConnection.Split('=');
-        //            strDataBasePath = arrDataSource[1];
-        //        }
-        //    }
-
-        //    return strDataBasePath;
-        //}
 
         /// <summary>
         /// FUNCION: private bool fnMngFFileExists(string strFileName, ref string strResultado)
@@ -449,8 +277,13 @@ namespace GMS.LIB.DataAccess
         }
 
         #endregion "PrivateMethdos"
-        
+
         #region "PublicMethods"
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string GetError { get { return _error; } }
 
         /// <summary>
         /// Constructor simple, sólo cadena de conexion, se cogen los valores de reconexion por defecto.
@@ -460,38 +293,55 @@ namespace GMS.LIB.DataAccess
         public GmsLibDataAcessSqlite(string strConnectionStringBd, out bool bolFnResult)
         {
             bolFnResult = false;
+            string strDataBasePath = string.Empty;
 
             _strConnectionString = strConnectionStringBd;
 
-            bool bolExisteDatabase = FnTestDataBase(_strConnectionString);
+            bool isFound = SearchElementInConnectionString(_strConnectionString, "data source", ref strDataBasePath);
 
-            if (bolExisteDatabase)
+            if (isFound)
             {
-                bolFnResult = true;
+                bool bolExisteDatabase = FnTestDataBase(_strConnectionString);
+
+                if (bolExisteDatabase)
+                {
+                    _error = "Database exists...";
+                    bolFnResult = true;
+                }
+                else
+                {
+                    _error = "Database do not exists... creating it.";
+                    bolFnResult = CreateDatabase(_strConnectionString);
+                }
             }
             else
             {
-                bolFnResult = CreateDatabase(_strConnectionString);
+                _error = "\'data source=<Database path>\' is missing on connection string, object will fail.";
+                bolFnResult = false;
+                throw new Exception(_error);
             }
+
         }
 
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="strConnectionStringBd">Cadena de conexión</param>
-        /// <param name="intNumRecon">Numero de reintentos de conexion.</param>
-        /// <param name="intNumSecs">Numero de segundos entre reconexion.</param>
-        /// <param name="maxExecutionRetries"></param>
+        /// <param name="connectionString">connection stringn</param>
+        /// <param name="numMaxReconnections">Max connection retries</param>
+        /// <param name="numSecondsBetweenReconnection">Seconds to wait each re-connection</param>
+        /// <param name="maxExecutionRetries">Max execution retries</param>
+        /// <param name="numSecondsBetweenExecutionRetries">Seconds to wait each execution</param>
         /// <param name="bolFnResult"></param>
-        public GmsLibDataAcessSqlite(string strConnectionStringBd, int intNumRecon, int intNumSecs, int maxExecutionRetries, out bool bolFnResult)
+        public GmsLibDataAcessSqlite(string connectionString, int numMaxReconnections, int numSecondsBetweenReconnection
+            , int maxExecutionRetries, int numSecondsBetweenExecutionRetries, out bool bolFnResult)
         {
             bolFnResult = false;
 
-            _strConnectionString = strConnectionStringBd;
-
-            NumberMaxConnectionTries = intNumRecon;
-            WaitConnectionMillisecondsTimeout = intNumSecs;
+            _strConnectionString = connectionString;
+            NumberMaxConnectionTries = numMaxReconnections;
+            WaitConnectionMillisecondsTimeout = numSecondsBetweenReconnection * 1000;
             NumberMaxExecutionTries = maxExecutionRetries;
+            WaitExecutionMillisecondsTimeout = numSecondsBetweenExecutionRetries * 1000;
 
             bool bolExisteDatabase = FnTestDataBase(_strConnectionString);
 
@@ -539,11 +389,19 @@ namespace GMS.LIB.DataAccess
                 //
             }
 
-            if (_objCn != null)
+            try
             {
                 _objCn.Close();
+            }
+            catch (Exception ex)
+            {
+                _error = ex.Message;
+            }
+            finally
+            {
                 _objCn = null;
             }
+
 
             // Free any unmanaged objects here.
             //
@@ -571,27 +429,30 @@ namespace GMS.LIB.DataAccess
                     _countConnectionTries++;
                     if (_countConnectionTries <= NumberMaxConnectionTries)
                     {
+                        _error = $"Number of connection retries: {_countConnectionTries}";
                         this.OpenSqlConnection();
                     }
                     else
                     {
+                        _error = $"Maximun number of connection retries exceed: {NumberMaxConnectionTries}";
                         _bolConnect = false;
                     }
                 }
                 else
                 {
+                    _error = $"Connection open...";
                     _bolConnect = true;
                 }
+
                 return _bolConnect;
             }
             catch (Exception ex)
             {
-                this.CadenaError = ex.Message;
+                this._error = ex.Message;
                 return false;
             }
 
         }
-
 
         /// <summary>
         /// 
@@ -599,24 +460,37 @@ namespace GMS.LIB.DataAccess
         /// <returns></returns>
         public bool CloseSqlConnection()
         {
+            bool result = false;
             try
             {
-                _objCn.Close();
+                if (this._objCn != null)
+                {
+                    _objCn.Close();
 
-                _objCn = null;
+                    _objCn = null;
 
-                this.MyTrans = null;
-                return true;
+                    this.MyTrans = null;
+
+                    _error = $"Connection close...";
+
+                    result = true;
+                }
+                else
+                {
+                    _error = $"Connection is not opened previously...";
+                    result = false;
+                }
             }
 
             catch (Exception ex)
             {
-                this.CadenaError = ex.Message;
+                this._error = ex.Message;
                 this.MyTrans = null;
-                return false;
+                result =  false;
             }
-        }
 
+            return result;
+        }
 
         /// <summary>
         /// Search for elements value in the connection string. Every element is separated by the ;(semicolon) and the value with the =(equal)
@@ -652,7 +526,7 @@ namespace GMS.LIB.DataAccess
         /// public void fnSQLiteForceDataBaseUpdate()
         /// function to force the SQLite system to shrink and compress the database.
         /// </summary>
-        public void ForceDataBaseUpdate(out string queryResult)
+        public void ForceDataBaseUpdate(string strConnectionString, out string queryResult)
         {
             SQLiteCommand sqlCommandSelect;
             DataTable dtInsert = new DataTable();
@@ -663,9 +537,12 @@ namespace GMS.LIB.DataAccess
             stBsqlSelect.Append("vacuum");
             sqlCommandSelect = new SQLiteCommand(stBsqlSelect.ToString());
 
-            Execute(sqlCommandSelect, ref dtInsert, out queryResult);
+            ExecuteStandAlone(sqlCommandSelect, ref dtInsert, out queryResult);
+
+            _error = queryResult;
+
             //Close commands
-            stBsqlSelect.Remove(0, stBsqlSelect.Length - 1);
+            stBsqlSelect.Clear();
             dtInsert.Clear();
             dtInsert.Dispose();
             sqlCommandSelect.Dispose();
@@ -701,54 +578,222 @@ namespace GMS.LIB.DataAccess
 
             return true;
         }
-        
-        public bool ExecuteSqlQuery(string strSqlExec, out string queryResult)
+
+        ///// <summary>
+        ///// 
+        ///// </summary>
+        ///// <param name="strSqlExec"></param>
+        ///// <param name="queryResult"></param>
+        ///// <returns></returns>
+        //public bool ExecuteSqlQuery(string strSqlExec, out string queryResult)
+        //{
+        //    SQLiteCommand sqlCommandSelect;
+        //    DataTable dtSelect = new DataTable();
+
+        //    string strResultadoDb = "";
+        //    bool bolBdResult = false;
+        //    bool bolResult = false;
+
+        //    StringBuilder stBsqlSelect = new StringBuilder();
+
+        //    stBsqlSelect.Append(strSqlExec);
+
+        //    sqlCommandSelect = new SQLiteCommand(stBsqlSelect.ToString());
+
+        //    bolBdResult = ExecuteStandAlone(sqlCommandSelect, ref dtSelect, out strResultadoDb);
+
+        //    if (bolBdResult)
+        //    {
+        //        if (dtSelect.Rows.Count >= 0)
+        //        {
+        //            bolResult = true; //AWS has rows to show.
+        //        }
+        //        else
+        //        {
+        //            bolResult = false;
+        //        }
+        //    }
+        //    else
+        //    {
+        //        bolResult = false;
+        //    }
+
+        //    //CerrarConexion();
+        //    //Close end commands
+        //    stBsqlSelect.Remove(0, stBsqlSelect.Length - 1);
+        //    dtSelect.Clear();
+        //    dtSelect.Dispose();
+        //    //dtrSelect.Close();
+        //    //dtrSelect.Dispose();
+        //    //dtSelectAllATT.Clear();
+        //    //dtSelectAllATT.Dispose();
+        //    sqlCommandSelect.Dispose();
+
+        //    queryResult = strResultadoDb;
+
+        //    return bolResult;
+
+        //}
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sProcedure"></param>
+        /// <param name="dt"></param>
+        /// <param name="queryResult"></param>
+        /// <returns></returns>
+        public bool Execute(string sProcedure, ref DataTable dt, out string queryResult)
         {
-            SQLiteCommand sqlCommandSelect;
-            DataTable dtSelect = new DataTable();
+            bool salida;
+            bool isNonQuery = false;
 
-            string strResultadoDb = "";
-            bool bolBdResult = false;
-            bool bolResult = false;
-
-            StringBuilder stBsqlSelect = new StringBuilder();
-
-            stBsqlSelect.Append(strSqlExec);
-
-            sqlCommandSelect = new SQLiteCommand(stBsqlSelect.ToString());
-
-            bolBdResult = ExecuteStandAlone(sqlCommandSelect, ref dtSelect, out strResultadoDb);
-            
-            if (bolBdResult)
+            try
             {
-                if (dtSelect.Rows.Count >= 0)
+
+                //using (SQLiteConnection conn = new SQLiteConnection(_strConnectionString))
+                //{
+                using (SQLiteCommand sqLiteCommand = new SQLiteCommand(sProcedure.ToString(), _objCn))
                 {
-                    bolResult = true; //AWS has rows to show.
+                    string commandText = sProcedure.ToUpper();
+                    string initialCommand = commandText.Trim().Substring(0, 6);
+                    if (
+                        initialCommand.Contains("DELETE") ||
+                        initialCommand.Contains("UPDATE") ||
+                        initialCommand.Contains("INSERT")
+                        )
+                    {
+
+                        //if (
+                        //    sProcedure.ToUpper().Contains("DELETE") ||
+                        //    sProcedure.ToUpper().Contains("UPDATE") ||
+                        //    sProcedure.ToUpper().Contains("INSERT")
+                        //    )
+                        //{
+                        isNonQuery = true;
+                    }
+
+                    if (isNonQuery)
+                    {
+                        //Este tipo de consulta, sólo devuelve resultados en queryResult si es un INSERT,DELETE,UPDATE.
+                        queryResult = sqLiteCommand.ExecuteNonQuery().ToString();
+                        salida = true;
+                    }
+                    else
+                    {
+                        //El objeto DataAdapter .NET de proveedor de datos está ajustado para leer registros en un objeto DataSet.
+                        //Este tipo de consulta, sólo devuelve resultados en queryResult si es una SELECT.
+                        using (SQLiteDataAdapter DataAdapter = new SQLiteDataAdapter(sqLiteCommand))
+                        {
+                            queryResult = DataAdapter.Fill(dt).ToString();
+                            salida = true;
+                        }
+                    }
+
+                    bool timeoutPatterIsFound = false;
+                    CheckResult(queryResult, out timeoutPatterIsFound);
+
+                    if (timeoutPatterIsFound)
+                    {
+                        salida = Execute(sProcedure, ref dt, out queryResult);
+                    }
                 }
-                else
+                //}
+
+            }
+            catch (Exception ex)
+            {
+                salida = false;
+                queryResult = ex.Message + "-" + sProcedure;
+
+                bool timeoutPatterIsFound = false;
+                CheckResult(queryResult, out timeoutPatterIsFound);
+
+                if (timeoutPatterIsFound)
                 {
-                    bolResult = false;
+                    salida = Execute(sProcedure, ref dt, out queryResult);
+                }
+
+            }
+
+            _error = queryResult;
+
+            return salida;
+
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sProcedure"></param>
+        /// <param name="dt"></param>
+        /// <param name="queryResult"></param>
+        /// <returns></returns>
+        public bool Execute(string sProcedure, ref DataSet dt, out string queryResult)
+        {
+            bool salida;
+            bool isNonQuery = false;
+
+            try
+            {
+                using (SQLiteCommand sqLiteCommand = new SQLiteCommand(sProcedure.ToString(), _objCn))
+                {
+                    string commandText = sProcedure.ToUpper();
+                    string initialCommand = commandText.Trim().Substring(0, 6);
+                    if (
+                        initialCommand.Contains("DELETE") ||
+                        initialCommand.Contains("UPDATE") ||
+                        initialCommand.Contains("INSERT")
+                        )
+                    {
+
+                        isNonQuery = true;
+                    }
+
+                    if (isNonQuery)
+                    {
+                        //Este tipo de consulta, sólo devuelve resultados en queryResult si es un INSERT,DELETE,UPDATE.
+                        queryResult = sqLiteCommand.ExecuteNonQuery().ToString();
+                        salida = true;
+                    }
+                    else
+                    {
+                        //El objeto DataAdapter .NET de proveedor de datos está ajustado para leer registros en un objeto DataSet.
+                        //Este tipo de consulta, sólo devuelve resultados en queryResult si es una SELECT.
+                        using (SQLiteDataAdapter DataAdapter = new SQLiteDataAdapter(sqLiteCommand))
+                        {
+                            queryResult = DataAdapter.Fill(dt).ToString();
+                            salida = true;
+                        }
+                    }
+
+                    bool timeoutPatterIsFound = false;
+                    CheckResult(queryResult, out timeoutPatterIsFound);
+
+                    if (timeoutPatterIsFound)
+                    {
+                        salida = Execute(sProcedure, ref dt, out queryResult);
+                    }
+
                 }
             }
-            else
+            catch (Exception ex)
             {
-                bolResult = false;
+                salida = false;
+                queryResult = ex.Message + "-" + sProcedure;
+
+                bool timeoutPatterIsFound = false;
+                CheckResult(queryResult, out timeoutPatterIsFound);
+
+                if (timeoutPatterIsFound)
+                {
+                    salida = Execute(sProcedure, ref dt, out queryResult);
+                }
+
             }
 
-            //CerrarConexion();
-            //Close end commands
-            stBsqlSelect.Remove(0, stBsqlSelect.Length - 1);
-            dtSelect.Clear();
-            dtSelect.Dispose();
-            //dtrSelect.Close();
-            //dtrSelect.Dispose();
-            //dtSelectAllATT.Clear();
-            //dtSelectAllATT.Dispose();
-            sqlCommandSelect.Dispose();
+            _error = queryResult;
 
-            queryResult = strResultadoDb;
-
-            return bolResult;
+            return salida;
 
         }
 
@@ -824,22 +869,24 @@ namespace GMS.LIB.DataAccess
 
                 salida = true;
 
-                CheckResult(queryResult, ref salida);
+                bool timeoutPatterIsFound = false;
+                CheckResult(queryResult, out timeoutPatterIsFound);
 
-                if (salida)
+                if (timeoutPatterIsFound)
                 {
                     salida = Execute(sqlCommand, ref dt, out queryResult);
                 }
+
             }
             catch (Exception ex)
             {
                 salida = false;
-                this.CadenaError = ex.Message + "-" + sqlCommand.CommandText;
-                queryResult = this.CadenaError;
+                queryResult = ex.Message + "-" + sqlCommand.CommandText;
 
-                CheckResult(queryResult, ref salida);
+                bool timeoutPatterIsFound = false;
+                CheckResult(queryResult, out timeoutPatterIsFound);
 
-                if (salida)
+                if (timeoutPatterIsFound)
                 {
                     salida = Execute(sqlCommand, ref dt, out queryResult);
                 }
@@ -847,6 +894,7 @@ namespace GMS.LIB.DataAccess
                 sqlCommand.Dispose();
             }
 
+            _error = queryResult;
 
             return salida;
         }
@@ -921,9 +969,10 @@ namespace GMS.LIB.DataAccess
 
                 salida = true;
 
-                CheckResult(queryResult, ref salida);
+                bool timeoutPatterIsFound = false;
+                CheckResult(queryResult, out timeoutPatterIsFound);
 
-                if (salida)
+                if (timeoutPatterIsFound)
                 {
                     salida = Execute(sqlCommand, ref dt, out queryResult);
                 }
@@ -932,12 +981,12 @@ namespace GMS.LIB.DataAccess
             catch (Exception ex)
             {
                 salida = false;
-                this.CadenaError = ex.Message + "-" + sqlCommand.CommandText;
-                queryResult = this.CadenaError;
+                queryResult = ex.Message + "-" + sqlCommand.CommandText;
 
-                CheckResult(queryResult, ref salida);
+                bool timeoutPatterIsFound = false;
+                CheckResult(queryResult, out timeoutPatterIsFound);
 
-                if (salida)
+                if (timeoutPatterIsFound)
                 {
                     salida = Execute(sqlCommand, ref dt, out queryResult);
                 }
@@ -945,6 +994,8 @@ namespace GMS.LIB.DataAccess
                 sqlCommand.Dispose();
             }
 
+            _error = queryResult;
+
 
             return salida;
         }
@@ -956,151 +1007,122 @@ namespace GMS.LIB.DataAccess
         /// <param name="dt"></param>
         /// <param name="queryResult"></param>
         /// <returns></returns>
-        public bool Execute(string sProcedure, ref DataTable dt, out string queryResult)
+        public bool ExecuteStandAlone(string sProcedure, ref DataTable dt, out string queryResult)
         {
             bool salida;
-            bool isNonQuery = false;
 
             try
             {
 
-                //using (SQLiteConnection conn = new SQLiteConnection(_strConnectionString))
-                //{
-                using (SQLiteCommand sqLiteCommand = new SQLiteCommand(sProcedure.ToString(), _objCn))
+                using (SQLiteConnection conn = new SQLiteConnection(_strConnectionString))
                 {
-                    string commandText = sProcedure.ToUpper();
-                    string initialCommand = commandText.Trim().Substring(0, 6);
-                    if (
-                        initialCommand.Contains("DELETE") ||
-                        initialCommand.Contains("UPDATE") ||
-                        initialCommand.Contains("INSERT")
-                        )
+                    using (SQLiteCommand sqLiteCommand = new SQLiteCommand(sProcedure.ToString(), conn))
                     {
+                        conn.Open();
 
-                        //if (
-                        //    sProcedure.ToUpper().Contains("DELETE") ||
-                        //    sProcedure.ToUpper().Contains("UPDATE") ||
-                        //    sProcedure.ToUpper().Contains("INSERT")
-                        //    )
-                        //{
-                        isNonQuery = true;
-                    }
-
-                    if (isNonQuery)
-                    {
-                        //Este tipo de consulta, sólo devuelve resultados en queryResult si es un INSERT,DELETE,UPDATE.
-                        queryResult = sqLiteCommand.ExecuteNonQuery().ToString();
-                        salida = true;
-                    }
-                    else
-                    {
-                        //El objeto DataAdapter .NET de proveedor de datos está ajustado para leer registros en un objeto DataSet.
-                        //Este tipo de consulta, sólo devuelve resultados en queryResult si es una SELECT.
-                        using (SQLiteDataAdapter DataAdapter = new SQLiteDataAdapter(sqLiteCommand))
+                        using (SQLiteDataAdapter dataAdapter = new SQLiteDataAdapter(sqLiteCommand))
                         {
-                            queryResult = DataAdapter.Fill(dt).ToString();
+                            queryResult = dataAdapter.Fill(dt).ToString();
                             salida = true;
                         }
-                    }
 
-                    CheckResult(queryResult, ref salida);
+                        conn.Close();
 
-                    if (salida)
-                    {
-                        salida = Execute(sProcedure, ref dt, out queryResult);
+                        //CheckResult(sProcedure, ref dt, ref queryResult, ref salida);
+                        bool timeoutPatterIsFound = false;
+                        CheckResult(queryResult, out timeoutPatterIsFound);
+
+                        if (timeoutPatterIsFound)
+                        {
+                            salida = ExecuteStandAlone(sProcedure, ref dt, out queryResult);
+                        }
+
                     }
                 }
-                //}
 
             }
             catch (Exception ex)
             {
                 salida = false;
-                this.CadenaError = ex.Message;
-                queryResult = this.CadenaError;
+                queryResult = ex.Message + "-" + sProcedure;
 
-                CheckResult(queryResult, ref salida);
+                //CheckResult(sProcedure, ref dt, ref queryResult, ref salida);
+                bool timeoutPatterIsFound = false;
+                CheckResult(queryResult, out timeoutPatterIsFound);
 
-                if (salida)
+                if (timeoutPatterIsFound)
                 {
-                    salida = Execute(sProcedure, ref dt, out queryResult);
+                    salida = ExecuteStandAlone(sProcedure, ref dt, out queryResult);
                 }
 
             }
-            return salida;
 
+            _error = queryResult;
+
+            return salida;
         }
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="sProcedure"></param>
-        /// <param name="dt"></param>
+        /// <param name="ds"></param>
         /// <param name="queryResult"></param>
         /// <returns></returns>
-        public bool Execute(string sProcedure, ref DataSet dt, out string queryResult)
+        public bool ExecuteStandAlone(string sProcedure, ref DataSet ds, out string queryResult)
         {
             bool salida;
-            bool isNonQuery = false;
 
             try
             {
-                using (SQLiteCommand sqLiteCommand = new SQLiteCommand(sProcedure.ToString(), _objCn))
+
+                using (SQLiteConnection conn = new SQLiteConnection(_strConnectionString))
                 {
-                    string commandText = sProcedure.ToUpper();
-                    string initialCommand = commandText.Trim().Substring(0, 6);
-                    if (
-                        initialCommand.Contains("DELETE") ||
-                        initialCommand.Contains("UPDATE") ||
-                        initialCommand.Contains("INSERT")
-                        )
+                    using (SQLiteCommand sqLiteCommand = new SQLiteCommand(sProcedure.ToString(), conn))
                     {
+                        conn.Open();
 
-                        isNonQuery = true;
-                    }
-
-                    if (isNonQuery)
-                    {
-                        //Este tipo de consulta, sólo devuelve resultados en queryResult si es un INSERT,DELETE,UPDATE.
-                        queryResult = sqLiteCommand.ExecuteNonQuery().ToString();
-                        salida = true;
-                    }
-                    else
-                    {
-                        //El objeto DataAdapter .NET de proveedor de datos está ajustado para leer registros en un objeto DataSet.
-                        //Este tipo de consulta, sólo devuelve resultados en queryResult si es una SELECT.
-                        using (SQLiteDataAdapter DataAdapter = new SQLiteDataAdapter(sqLiteCommand))
+                        using (SQLiteDataAdapter dataAdapter = new SQLiteDataAdapter(sqLiteCommand))
                         {
-                            queryResult = DataAdapter.Fill(dt).ToString();
+                            queryResult = dataAdapter.Fill(ds).ToString();
                             salida = true;
                         }
+
+                        conn.Close();
+
+                        //CheckResult(sProcedure, ref ds, ref queryResult, ref salida);
+                        bool timeoutPatterIsFound = false;
+                        CheckResult(queryResult, out timeoutPatterIsFound);
+
+                        if (timeoutPatterIsFound)
+                        {
+                            salida = ExecuteStandAlone(sProcedure, ref ds, out queryResult);
+                        }
+
                     }
-
-                    CheckResult(queryResult, ref salida);
-
-                    if (salida)
-                    {
-                        salida = Execute(sProcedure, ref dt, out queryResult);
-                    }
-
                 }
+
             }
             catch (Exception ex)
             {
                 salida = false;
-                this.CadenaError = ex.Message;
-                queryResult = this.CadenaError;
+                queryResult = ex.Message + "-" + sProcedure;
 
-                CheckResult(queryResult, ref salida);
+                //CheckResult(sProcedure, ref ds, ref queryResult, ref salida);
+                bool timeoutPatterIsFound = false;
+                CheckResult(queryResult, out timeoutPatterIsFound);
 
-                if (salida)
+                if (timeoutPatterIsFound)
                 {
-                    salida = Execute(sProcedure, ref dt, out queryResult);
+                    salida = ExecuteStandAlone(sProcedure, ref ds, out queryResult);
                 }
 
-            }
-            return salida;
 
+            }
+
+            _error = queryResult;
+
+            return salida;
         }
 
         /// <summary>
@@ -1178,10 +1200,10 @@ namespace GMS.LIB.DataAccess
 
                 salida = true;
 
-                //CheckResult(sqlCommand, ref dt, ref queryResult, ref salida);
-                CheckResult(queryResult, ref salida);
+                bool timeoutPatterIsFound = false;
+                CheckResult(queryResult, out timeoutPatterIsFound);
 
-                if (salida)
+                if (timeoutPatterIsFound)
                 {
                     salida = ExecuteStandAlone(sqlCommand, ref dt, out queryResult);
                 }
@@ -1190,19 +1212,19 @@ namespace GMS.LIB.DataAccess
             catch (Exception ex)
             {
                 salida = false;
-                this.CadenaError = ex.Message + "-" + sqlCommand.CommandText;
-                queryResult = this.CadenaError;
+                queryResult = ex.Message + "-" + sqlCommand.CommandText;
 
-                //CheckResult(sqlCommand, ref dt, ref queryResult, ref salida);
-                CheckResult(queryResult, ref salida);
+                bool timeoutPatterIsFound = false;
+                CheckResult(queryResult, out timeoutPatterIsFound);
 
-                if (salida)
+                if (timeoutPatterIsFound)
                 {
                     salida = ExecuteStandAlone(sqlCommand, ref dt, out queryResult);
                 }
 
             }
 
+            _error = queryResult;
 
             return salida;
         }
@@ -1257,7 +1279,7 @@ namespace GMS.LIB.DataAccess
                             //Este tipo de consulta, sólo devuelve resultados en queryResult si es un INSERT,DELETE,UPDATE.
 #if DEBUG
                             //queryResult = "Timeout Expired";
-                             queryResult = sqLiteCommand.ExecuteNonQuery().ToString();
+                            queryResult = sqLiteCommand.ExecuteNonQuery().ToString();
 #else
                             queryResult = sqLiteCommand.ExecuteNonQuery().ToString();
 #endif
@@ -1269,10 +1291,10 @@ namespace GMS.LIB.DataAccess
                             using (SQLiteDataAdapter dataAdapter = new SQLiteDataAdapter(sqLiteCommand))
                             {
 #if DEBUG
-                            //queryResult = "Timeout Expired";
-                            queryResult = dataAdapter.Fill(dt).ToString();
+                                //queryResult = "Timeout Expired";
+                                queryResult = dataAdapter.Fill(dt).ToString();
 #else
-                            queryResult = dataAdapter.Fill(dt).ToString();
+                                queryResult = dataAdapter.Fill(dt).ToString();
 #endif
                             }
                         }
@@ -1288,11 +1310,10 @@ namespace GMS.LIB.DataAccess
                     //2016/10/03-GeMesoft: new
                     conn.Close();
 
-                    //CheckResult(sqlCommand, ref dt, ref queryResult, ref salida);
+                    bool timeoutPatterIsFound = false;
+                    CheckResult(queryResult, out timeoutPatterIsFound);
 
-                    CheckResult(queryResult, ref salida);
-
-                    if (salida)
+                    if (timeoutPatterIsFound)
                     {
                         salida = ExecuteStandAlone(sqlCommand, ref dt, out queryResult);
                     }
@@ -1303,14 +1324,12 @@ namespace GMS.LIB.DataAccess
             catch (Exception ex)
             {
                 salida = false;
-                this.CadenaError = ex.Message + "-" + sqlCommand.CommandText;
-                queryResult = this.CadenaError;
+                queryResult = ex.Message + "-" + sqlCommand.CommandText;
 
-                //CheckResult(sqlCommand, ref dt, ref queryResult, ref salida);
+                bool timeoutPatterIsFound = false;
+                CheckResult(queryResult, out timeoutPatterIsFound);
 
-                CheckResult(queryResult, ref salida);
-
-                if (salida)
+                if (timeoutPatterIsFound)
                 {
                     salida = ExecuteStandAlone(sqlCommand, ref dt, out queryResult);
                 }
@@ -1318,134 +1337,28 @@ namespace GMS.LIB.DataAccess
 
             }
 
-            return salida;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sProcedure"></param>
-        /// <param name="dt"></param>
-        /// <param name="queryResult"></param>
-        /// <returns></returns>
-        public bool ExecuteStandAlone(string sProcedure, ref DataTable dt, out string queryResult)
-        {
-            bool salida;
-
-            try
-            {
-
-                using (SQLiteConnection conn = new SQLiteConnection(_strConnectionString))
-                {
-                    using (SQLiteCommand sqLiteCommand = new SQLiteCommand(sProcedure.ToString(), conn))
-                    {
-                        conn.Open();
-
-                        using (SQLiteDataAdapter dataAdapter = new SQLiteDataAdapter(sqLiteCommand))
-                        {
-                            queryResult = dataAdapter.Fill(dt).ToString();
-                            salida = true;
-                        }
-
-                        conn.Close();
-
-                        //CheckResult(sProcedure, ref dt, ref queryResult, ref salida);
-                        CheckResult(queryResult, ref salida);
-
-                        if (salida)
-                        {
-                            salida = ExecuteStandAlone(sProcedure, ref dt, out queryResult);
-                        }
-
-                    }
-                }
-
-            }
-            catch (Exception ex)
-            {
-                salida = false;
-                this.CadenaError = ex.Message;
-                queryResult = this.CadenaError;
-
-                //CheckResult(sProcedure, ref dt, ref queryResult, ref salida);
-                CheckResult(queryResult, ref salida);
-
-                if (salida)
-                {
-                    salida = ExecuteStandAlone(sProcedure, ref dt, out queryResult);
-                }
-
-            }
+            _error = queryResult;
 
             return salida;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sProcedure"></param>
-        /// <param name="ds"></param>
-        /// <param name="queryResult"></param>
-        /// <returns></returns>
-        public bool ExecuteStandAlone(string sProcedure, ref DataSet ds, out string queryResult)
-        {
-            bool salida;
-
-            try
-            {
-
-                using (SQLiteConnection conn = new SQLiteConnection(_strConnectionString))
-                {
-                    using (SQLiteCommand sqLiteCommand = new SQLiteCommand(sProcedure.ToString(), conn))
-                    {
-                        conn.Open();
-
-                        using (SQLiteDataAdapter dataAdapter = new SQLiteDataAdapter(sqLiteCommand))
-                        {
-                            queryResult = dataAdapter.Fill(ds).ToString();
-                            salida = true;
-                        }
-
-                        conn.Close();
-
-                        //CheckResult(sProcedure, ref ds, ref queryResult, ref salida);
-                        CheckResult(queryResult, ref salida);
-
-                        if (salida)
-                        {
-                            salida = ExecuteStandAlone(sProcedure, ref ds, out queryResult);
-                        }
-
-                    }
-                }
-
-            }
-            catch (Exception ex)
-            {
-                salida = false;
-                this.CadenaError = ex.Message;
-                queryResult = this.CadenaError;
-
-                //CheckResult(sProcedure, ref ds, ref queryResult, ref salida);
-                CheckResult(queryResult, ref salida);
-
-                if (salida)
-                {
-                    salida = ExecuteStandAlone(sProcedure, ref ds, out queryResult);
-                }
-
-
-            }
-
-            return salida;
-        }
 
         #endregion "PublicMethods"
 
         #region "NotImplemented"
 
         /// <summary>
-        /// 
+        /// NotImplemented
+        /// </summary>
+        /// <returns></returns>
+        public bool ExecuteSqlQuery(string strSqlExec, out string queryResult)
+        {
+            throw new NotImplementedException();
+        }
+
+
+        /// <summary>
+        /// NotImplemented
         /// </summary>
         /// <param name="sqlCommand"></param>
         /// <param name="dt"></param>
@@ -1457,49 +1370,19 @@ namespace GMS.LIB.DataAccess
         }
 
         /// <summary>
-        /// 
+        /// NotImplemented
         /// </summary>
         /// <param name="sqlCommand"></param>
-        /// <param name="dt"></param>
+        /// <param name="dataset"></param>
         /// <param name="queryResult"></param>
         /// <returns></returns>
-        public bool ExecuteStandAlone(SqlCommand sqlCommand, ref DataTable dt, out string queryResult)
+        public bool Execute(SqlCommand sqlCommand, ref DataSet dataset, out string queryResult)
         {
             throw new NotImplementedException();
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sqlCommand"></param>
-        /// <param name="ds"></param>
-        /// <param name="queryResult"></param>
-        /// <returns></returns>
-        public bool ExecuteStandAlone(SqlCommand sqlCommand, ref DataSet ds, out string queryResult)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        public bool OpenOleDbConnection()
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        public bool CloseOleDbConnection()
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// 
+        /// NotImplemented
         /// </summary>
         /// <param name="sqlCommand"></param>
         /// <param name="dt"></param>
@@ -1511,7 +1394,43 @@ namespace GMS.LIB.DataAccess
         }
 
         /// <summary>
-        /// 
+        /// NotImplemented
+        /// </summary>
+        /// <param name="sqlCommand"></param>
+        /// <param name="dataset"></param>
+        /// <param name="queryResult"></param>
+        /// <returns></returns>
+        public bool Execute(OleDbCommand sqlCommand, ref DataSet dataset, out string queryResult)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// NotImplemented
+        /// </summary>
+        /// <param name="sqlCommand"></param>
+        /// <param name="dt"></param>
+        /// <param name="queryResult"></param>
+        /// <returns></returns>
+        public bool ExecuteStandAlone(SqlCommand sqlCommand, ref DataTable dt, out string queryResult)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// NotImplemented
+        /// </summary>
+        /// <param name="sqlCommand"></param>
+        /// <param name="ds"></param>
+        /// <param name="queryResult"></param>
+        /// <returns></returns>
+        public bool ExecuteStandAlone(SqlCommand sqlCommand, ref DataSet ds, out string queryResult)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// NotImplemented
         /// </summary>
         /// <param name="sqlCommand"></param>
         /// <param name="dt"></param>
@@ -1521,7 +1440,36 @@ namespace GMS.LIB.DataAccess
         {
             throw new NotImplementedException();
         }
-        
+
+        /// <summary>
+        /// NotImplemented
+        /// </summary>
+        /// <param name="sqlCommand"></param>
+        /// <param name="dataset"></param>
+        /// <param name="queryResult"></param>
+        /// <returns></returns>
+        public bool ExecuteStandAlone(OleDbCommand sqlCommand, ref DataSet dataset, out string queryResult)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// NotImplemented
+        /// </summary>
+        /// <returns></returns>
+        public bool OpenOleDbConnection()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// NotImplemented
+        /// </summary>
+        /// <returns></returns>
+        public bool CloseOleDbConnection()
+        {
+            throw new NotImplementedException();
+        }
 
         #endregion "NotImplemented"
 

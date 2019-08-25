@@ -12,7 +12,7 @@ namespace GMS.LIB.DataAccess
     /// <summary>
     /// 
     /// </summary>
-    public class GmsLibDataAccessMsAccess : IGmsLibDataAccess, IDisposable
+    public class GmsLibDataAccessMsAccess : IGmsLibDataAccess
     {
         // Flag: Has Dispose already been called?
         bool _disposed = false;
@@ -21,14 +21,13 @@ namespace GMS.LIB.DataAccess
 
         private bool _conectado = false;
 
-        private OleDbConnection ObjOleCn { get; set; }
-        private SqlConnection ObjSqlCn { get; set; }
+        private OleDbConnection ObjOleCn;
         
         /// <summary>
         /// 
         /// </summary>
-        private string CadenaError { get; set; }
-        
+        private string _error = string.Empty;
+
         /// <summary>
         /// 
         /// </summary>
@@ -47,9 +46,15 @@ namespace GMS.LIB.DataAccess
         #region "PublicMethods"
 
         /// <summary>
+        /// 
+        /// </summary>
+        public string GetError { get { return _error; } }
+
+        /// <summary>
         /// Constructor simple, sólo cadena de conexión, se cogen los valores de reconexión por defecto.
         /// </summary>
         /// <param name="strConnectionStringBd">Cadenad de conexión</param>
+        /// <param name="bolFnResult"></param>
         public GmsLibDataAccessMsAccess(string strConnectionStringBd, out bool bolFnResult)
         {
             StrConnectionString = strConnectionStringBd;
@@ -137,7 +142,7 @@ namespace GMS.LIB.DataAccess
             }
             catch (Exception ex)
             {
-                this.CadenaError = ex.Message;
+                _error = ex.Message;
                 this._conectado = false;
                 return false;
             }
@@ -167,7 +172,7 @@ namespace GMS.LIB.DataAccess
             catch (Exception ex)
             {
                 this._conectado = false;
-                this.CadenaError = ex.Message;
+                _error = ex.Message;
                 this.MyTrans = null;
                 return false;
             }
@@ -229,9 +234,11 @@ namespace GMS.LIB.DataAccess
             catch (Exception ex)
             {
                 bolFnReturn = false;
-                this.CadenaError = ex.Message;
-                queryResult = this.CadenaError;
+                queryResult = ex.Message;
             }
+
+            _error = queryResult;
+
             return bolFnReturn;
         }
 
@@ -277,55 +284,10 @@ namespace GMS.LIB.DataAccess
             catch (Exception ex)
             {
                 salida = false;
-                this.CadenaError = ex.Message;
-                queryResult = this.CadenaError;
+                queryResult = ex.Message;
             }
-            return salida;
-        }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sqlCommand"></param>
-        /// <param name="dt"></param>
-        /// <param name="queryResult"></param>
-        /// <returns></returns>
-        public bool Execute(SqlCommand sqlCommand, ref DataTable dt, out string queryResult)
-        {
-            SqlDataAdapter dataAdapter;
-            bool salida;
-            bool isNonQuery = false;
-            try
-            {
-                sqlCommand.Connection = ObjSqlCn;
-
-                if (sqlCommand.CommandText.ToUpper().Contains("DELETE") ||
-                    sqlCommand.CommandText.ToUpper().Contains("UPDATE") ||
-                    sqlCommand.CommandText.ToUpper().Contains("INSERT")
-                    )
-                {
-                    isNonQuery = true;
-                }
-
-                if (isNonQuery)
-                {
-                    queryResult = sqlCommand.ExecuteNonQuery().ToString();
-                }
-                else
-                {
-
-                    //El objeto DataAdapter .NET de proveedor de datos está ajustado para leer registros en un objeto DataSet
-                    dataAdapter = new SqlDataAdapter(sqlCommand);
-                    queryResult = dataAdapter.Fill(dt).ToString();
-                }
-                salida = true;
-            }
-            catch (Exception ex)
-            {
-                salida = false;
-                this.CadenaError = ex.Message;
-                queryResult = this.CadenaError;
-            }
+            _error = queryResult;
             return salida;
         }
 
@@ -361,9 +323,11 @@ namespace GMS.LIB.DataAccess
             catch (Exception ex)
             {
                 bolFnReturn = false;
-                this.CadenaError = ex.Message;
-                queryResult = this.CadenaError;
+                queryResult = ex.Message;
             }
+
+            _error = queryResult;
+
             return bolFnReturn;
         }
 
@@ -416,9 +380,11 @@ namespace GMS.LIB.DataAccess
             catch (Exception ex)
             {
                 salida = false;
-                this.CadenaError = ex.Message;
-                queryResult = this.CadenaError;
+                queryResult = ex.Message;
             }
+
+            _error = queryResult;
+
             return salida;
         }
 
@@ -449,6 +415,14 @@ namespace GMS.LIB.DataAccess
         #endregion "PublicMethods"
 
         #region "PublicStaticMethods"
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="strConnectionString"></param>
+        /// <param name="element2Search"></param>
+        /// <param name="resultSearch"></param>
+        /// <returns></returns>
         public static bool SearchElementInConnectionString(string strConnectionString, string element2Search, ref string resultSearch)
         {
             bool functionResult = false;
@@ -500,6 +474,10 @@ namespace GMS.LIB.DataAccess
             _disposed = true;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         private bool Reconexion()
         {
             bool bolconectado = false;
@@ -509,7 +487,7 @@ namespace GMS.LIB.DataAccess
                 bolconectado = true;
 
             }
-            catch (Exception ex)
+            catch (Exception)
             {
 
                 bolconectado = false;
@@ -524,7 +502,7 @@ namespace GMS.LIB.DataAccess
         {
             bool result = true;
 
-            CatalogClass cat = new CatalogClass();
+            Catalog cat = new Catalog();
             cat.Create(strConnectionString);
 
             return result;
@@ -535,17 +513,121 @@ namespace GMS.LIB.DataAccess
 
 
         #region NotImplemented
-
+       
+        /// <summary>
+        /// NotImplemented
+        /// </summary>
+        /// <param name="strConnectionString"></param>
+        /// <returns></returns>
         public bool FnCreateDataBase(string strConnectionString)
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// NotImplemented
+        /// </summary>
+        /// <returns></returns>
         public bool ExecuteSqlQuery(string strSqlExec, out string queryResult)
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// NotImplemented
+        /// </summary>
+        /// <returns></returns>
+        public bool BackupDataBase(string strPath2Exec, string strSqlite3Path)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// NotImplemented
+        /// </summary>
+        /// <returns></returns>
+        public void ForceDataBaseUpdate(string strConnectionString, out string queryResult)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// NotImplemented
+        /// </summary>
+        /// <param name="sqlCommand"></param>
+        /// <param name="dt"></param>
+        /// <param name="queryResult"></param>
+        /// <returns></returns>
+        public bool Execute(SqlCommand sqlCommand, ref DataTable dt, out string queryResult)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// NotImplemented
+        /// </summary>
+        /// <param name="sqlCommand"></param>
+        /// <param name="dt"></param>
+        /// <param name="queryResult"></param>
+        /// <returns></returns>
+        public bool Execute(SQLiteCommand sqlCommand, ref DataTable dt, out string queryResult)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// NotImplemented
+        /// </summary>
+        /// <returns></returns>
+        public bool Execute(SQLiteCommand sqlCommand, ref DataSet dataset, out string queryResult)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// NotImplemented
+        /// </summary>
+        /// <returns></returns>
+        public bool Execute(string query, ref DataSet dataset, out string queryResult)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// NotImplemented
+        /// </summary>
+        /// <returns></returns>
+        public bool Execute(SqlCommand sqlCommand, ref DataSet dataset, out string queryResult)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// NotImplemented
+        /// </summary>
+        /// <returns></returns>
+        public bool Execute(OleDbCommand sqlCommand, ref DataSet dataset, out string queryResult)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// NotImplemented
+        /// </summary>
+        /// <returns></returns>
+        public bool ExecuteStandAlone(string query, ref DataSet dataset, out string queryResult)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// NotImplemented
+        /// </summary>
+        /// <returns></returns>
+        public bool ExecuteStandAlone(OleDbCommand sqlCommand, ref DataSet dataset, out string queryResult)
+        {
+            throw new NotImplementedException();
+        }
 
         /// <summary>
         /// 
@@ -571,27 +653,6 @@ namespace GMS.LIB.DataAccess
             throw new NotImplementedException();
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sqlCommand"></param>
-        /// <param name="dt"></param>
-        /// <param name="queryResult"></param>
-        /// <returns></returns>
-        public bool Execute(SQLiteCommand sqlCommand, ref DataTable dt, out string queryResult)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool BackupDataBase(string strPath2Exec, string strSqlite3Path)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void ForceDataBaseUpdate(out string queryResult)
-        {
-            throw new NotImplementedException();
-        }
 
         #endregion NotImplemented
 

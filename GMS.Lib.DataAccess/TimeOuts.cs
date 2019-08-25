@@ -28,6 +28,12 @@ namespace GMS.LIB.DataAccess
             get { return _listTimeouts; }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="queryResult"></param>
+        /// <param name="timeoutMatched"></param>
+        /// <returns></returns>
         public static bool CheckTimeout(string queryResult, out string timeoutMatched)
         {
             bool result = false;
