@@ -23,10 +23,7 @@ namespace GMS.LIB.DataAccess
 
         private bool _conectado = false;
 
-        /// <summary>
-        /// 
-        /// </summary>
-        private string CadenaError { get; set; }
+        private readonly string _strConnectionString;
 
         /// <summary>
         /// 
@@ -39,37 +36,37 @@ namespace GMS.LIB.DataAccess
         /// </summary>
         private SqlTransaction MyTrans { get; set; }
 
-        private string StrConnectionString { get; set; }
+        //private string StrConnectionString { get; set; }
 
         private int NumberMaxConnectionTries { get; set; } = 3;
 
-        private int NumberMaxExecutionTries { get; set; } = 10;
+        private int NumberMaxExecutionTries { get; set; } = 3;
 
         private int _countConnectionTries = 0;
         private int _countExcecutionTries = 0;
 
         private int WaitConnectionMillisecondsTimeout { get; set; } = 10000;
-        private int WaitExecutionMillisecondsTimeout { get; set; } = 6000;
+        private int WaitExecutionMillisecondsTimeout { get; set; } = 10000;
 
         private bool _bolConnect = false;
 
         #region "PrivateMethdos"
 
-        private bool ReconexionSql()
+        private bool ReconexionSql(out string result)
         {
             bool bolconectado = false;
+            result = string.Empty;
+
             try
             {
                 this._objCn.Open();
                 bolconectado = true;
 
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
                 bolconectado = false;
-
-
+                result = ex.Message;
             }
             return bolconectado;
 
@@ -95,9 +92,10 @@ namespace GMS.LIB.DataAccess
 
         }
 
-        private void CheckResult(string queryResult, ref bool salida)
+        private void CheckResult(ref string queryResult, out bool timeoutPatterIsFound)
         {
             string patterMatched = string.Empty;
+            timeoutPatterIsFound = false;
 
             if (TimeOuts.CheckTimeout(queryResult, out patterMatched))
             {
@@ -105,12 +103,12 @@ namespace GMS.LIB.DataAccess
                 {
                     _countExcecutionTries++;
                     System.Threading.Thread.Sleep(WaitExecutionMillisecondsTimeout);
-                    salida = true;
+                    timeoutPatterIsFound = true;
                 }
                 else
                 {
-                    _error = "#Number of retries exceed: " + NumberMaxExecutionTries;
-                    salida = false;
+                    queryResult += "#Number of retries exceed: " + NumberMaxExecutionTries;
+                    timeoutPatterIsFound = false;
                 }
             }
         }
@@ -131,7 +129,7 @@ namespace GMS.LIB.DataAccess
         /// <param name="connectionString">Cadenad de conexión</param>
         public GmsLibDataAccessSqlServer(string connectionString)
         {
-            StrConnectionString = connectionString;
+            _strConnectionString = connectionString;
         }
 
 
@@ -146,7 +144,7 @@ namespace GMS.LIB.DataAccess
         public GmsLibDataAccessSqlServer(string connectionString, int numMaxReconnections, int numSecondsBetweenReconnection
             , int maxExecutionRetries, int numSecondsBetweenExecutionRetries)
         {
-            StrConnectionString = connectionString;
+            _strConnectionString = connectionString;
             NumberMaxConnectionTries = numMaxReconnections;
             WaitConnectionMillisecondsTimeout = numSecondsBetweenReconnection * 1000;
             NumberMaxExecutionTries = maxExecutionRetries;
@@ -202,10 +200,10 @@ namespace GMS.LIB.DataAccess
             {
                 if (this._objCn == null)
                 {
-                    _objCn = new SqlConnection(this.StrConnectionString);
+                    _objCn = new SqlConnection(this._strConnectionString);
                 }
 
-                this._conectado = ReconexionSql();
+                this._conectado = ReconexionSql(out _error);
 
                 if (!this._conectado)
                 {
@@ -219,6 +217,7 @@ namespace GMS.LIB.DataAccess
                     else
                     {
                         _bolConnect = false;
+                        _error = $"Max reconnections({NumberMaxConnectionTries}) exceeded." + _error;
                     }
                 }
                 else
@@ -230,7 +229,7 @@ namespace GMS.LIB.DataAccess
             }
             catch (Exception ex)
             {
-                this.CadenaError = ex.Message;
+                this._error = ex.Message;
                 this._conectado = false;
                 return false;
             }
@@ -246,7 +245,7 @@ namespace GMS.LIB.DataAccess
             {
                 if (this._objOleCn == null)
                 {
-                    _objOleCn = new OleDbConnection(this.StrConnectionString);
+                    _objOleCn = new OleDbConnection(this._strConnectionString);
                 }
 
                 this._conectado = ReconexionOleDb();
@@ -274,7 +273,7 @@ namespace GMS.LIB.DataAccess
             }
             catch (Exception ex)
             {
-                this.CadenaError = ex.Message;
+                this._error = ex.Message;
                 this._conectado = false;
                 return false;
             }
@@ -286,7 +285,8 @@ namespace GMS.LIB.DataAccess
         /// <returns></returns>
         public bool CloseSqlConnection()
         {
-
+            bool result = false;
+            
             try
             {
                 if (_conectado)
@@ -297,17 +297,28 @@ namespace GMS.LIB.DataAccess
 
                     _conectado = false;
                     this.MyTrans = null;
-                }
-                return true;
-            }
 
+                    _error = $"Connection close...";
+
+                    result = true;
+
+                }
+                else
+                {
+                    _error = $"Connection is not opened previously...";
+                    result = false;
+                }
+            }
             catch (Exception ex)
             {
                 this._conectado = false;
-                this.CadenaError = ex.Message;
+                this._error = ex.Message;
                 this.MyTrans = null;
-                return false;
+                result = false;
             }
+
+            return result;
+
         }
 
         /// <summary>
@@ -334,7 +345,7 @@ namespace GMS.LIB.DataAccess
             catch (Exception ex)
             {
                 this._conectado = false;
-                this.CadenaError = ex.Message;
+                this._error = ex.Message;
                 this.MyTrans = null;
                 return false;
             }
@@ -346,62 +357,147 @@ namespace GMS.LIB.DataAccess
         ///     Ejecuta una cadena SQL y devuelve datos en un DataTable. El resultado de la funcion se almacena en una cadena de texto.
         /// </summary>
         /// <param name="sProcedure">Type string - Sentencia SQL que se desea ejecutar</param>
-        /// <param name="dt">Type DataTable - Datatable donde se devuelven los datos de la ejecución</param>
+        /// <param name="dataTable">Type DataTable - Datatable donde se devuelven los datos de la ejecución</param>
         /// <param name="queryResult">Type string - Cadena de texto con el restultado de la ejecución</param> 
         /// <returns>Devuelve true/false en función de si se ejecuta correctamente.</returns>
-        public bool Execute(string sProcedure, ref DataTable dt, out string queryResult)
+        public bool Execute(string sProcedure, ref DataTable dataTable, out string queryResult)
         {
             bool salida;
             bool isNonQuery = false;
             try
             {
-
-
-                if (
-                    sProcedure.ToUpper().Contains("DELETE") ||
-                    sProcedure.ToUpper().Contains("UPDATE") ||
-                    sProcedure.ToUpper().Contains("INSERT")
-                    )
+                using (SqlCommand sqlCommand = new SqlCommand(sProcedure.ToString(), _objCn))
                 {
-                    isNonQuery = true;
+                    string commandText = sProcedure.ToUpper();
+                    string initialCommand = commandText.Trim().Substring(0, 6);
+                    if (
+                        initialCommand.Contains("DELETE") ||
+                        initialCommand.Contains("UPDATE") ||
+                        initialCommand.Contains("INSERT")
+                        )
+                    {
+                        isNonQuery = true;
+                    }
+
+                    if (isNonQuery)
+                    {
+                        //Este tipo de consulta, sólo devuelve resultados en queryResult si es un INSERT,DELETE,UPDATE.
+                        queryResult = sqlCommand.ExecuteNonQuery().ToString();
+                        salida = true;
+                    }
+                    else
+                    {
+                        //El objeto DataAdapter .NET de proveedor de datos está ajustado para leer registros en un objeto DataSet.
+                        //Este tipo de consulta, sólo devuelve resultados en queryResult si es una SELECT.
+                        using (SqlDataAdapter DataAdapter = new SqlDataAdapter(sqlCommand))
+                        {
+                            queryResult = DataAdapter.Fill(dataTable).ToString();
+                            salida = true;
+                        }
+                    }
+
+                    bool timeoutPatterIsFound = false;
+                    CheckResult(ref queryResult, out timeoutPatterIsFound);
+
+                    if (timeoutPatterIsFound)
+                    {
+                        salida = Execute(sProcedure, ref dataTable, out queryResult);
+                    }
+
+
                 }
 
-                if (isNonQuery)
-                {
-                    SqlCommand sqlCommand = new SqlCommand(sProcedure);
-                
-                    queryResult = sqlCommand.ExecuteNonQuery().ToString();
-                }
-                else
-                {
-                    //El objeto DataAdapter .NET de proveedor de datos está ajustado para leer registros en un objeto DataSet
-                    SqlDataAdapter dataAdapter = new SqlDataAdapter(sProcedure, this._objCn);
-                    queryResult = dataAdapter.Fill(dt).ToString();
-                }
-
-
-                salida = true;
-
-                CheckResult(queryResult, ref salida);
-
-                if (salida)
-                {
-                    salida = Execute(sProcedure, ref dt, out queryResult);
-                }
             }
             catch (Exception ex)
             {
                 salida = false;
-                this.CadenaError = ex.Message;
-                queryResult = this.CadenaError;
+                queryResult = ex.Message + "-" + sProcedure;
 
-                CheckResult(queryResult, ref salida);
+                bool timeoutPatterIsFound = false;
+                CheckResult(ref queryResult, out timeoutPatterIsFound);
 
-                if (salida)
+                if (timeoutPatterIsFound)
                 {
-                    salida = Execute(sProcedure, ref dt, out queryResult);
+                    salida = Execute(sProcedure, ref dataTable, out queryResult);
                 }
             }
+
+            _error = queryResult;
+
+            return salida;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sProcedure"></param>
+        /// <param name="dataSet"></param>
+        /// <param name="queryResult"></param>
+        /// <returns></returns>
+        public bool Execute(string sProcedure, ref DataSet dataSet, out string queryResult)
+        {
+            bool salida;
+            bool isNonQuery = false;
+            try
+            {
+                using (SqlCommand sqlCommand = new SqlCommand(sProcedure.ToString(), _objCn))
+                {
+                    string commandText = sProcedure.ToUpper();
+                    string initialCommand = commandText.Trim().Substring(0, 6);
+                    if (
+                        initialCommand.Contains("DELETE") ||
+                        initialCommand.Contains("UPDATE") ||
+                        initialCommand.Contains("INSERT")
+                        )
+                    {
+                        isNonQuery = true;
+                    }
+
+                    if (isNonQuery)
+                    {
+                        //Este tipo de consulta, sólo devuelve resultados en queryResult si es un INSERT,DELETE,UPDATE.
+                        queryResult = sqlCommand.ExecuteNonQuery().ToString();
+                        salida = true;
+                    }
+                    else
+                    {
+                        //El objeto DataAdapter .NET de proveedor de datos está ajustado para leer registros en un objeto DataSet.
+                        //Este tipo de consulta, sólo devuelve resultados en queryResult si es una SELECT.
+                        using (SqlDataAdapter DataAdapter = new SqlDataAdapter(sqlCommand))
+                        {
+                            queryResult = DataAdapter.Fill(dataSet).ToString();
+                            salida = true;
+                        }
+                    }
+
+                    bool timeoutPatterIsFound = false;
+                    CheckResult(ref queryResult, out timeoutPatterIsFound);
+
+                    if (timeoutPatterIsFound)
+                    {
+                        salida = Execute(sProcedure, ref dataSet, out queryResult);
+                    }
+
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                salida = false;
+                queryResult = ex.Message + "-" + sProcedure;
+
+                bool timeoutPatterIsFound = false;
+                CheckResult(ref queryResult, out timeoutPatterIsFound);
+
+                if (timeoutPatterIsFound)
+                {
+                    salida = Execute(sProcedure, ref dataSet, out queryResult);
+                }
+            }
+
+            _error = queryResult;
+
             return salida;
         }
 
@@ -410,11 +506,11 @@ namespace GMS.LIB.DataAccess
         ///     Ejecuta un comando SQL y devuelve datos en un DataTable. El resultado de la funcion se almacena en una cadena de texto.
         /// </summary>
         /// <param name="sqlCommand">Type SqlCommand - Comando SQLite que se desea ejecutar</param>
-        /// <param name="dt">Type DataTable - Datatable donde se devuelven los datos de la ejecución</param>
+        /// <param name="dataTable">Type DataTable - Datatable donde se devuelven los datos de la ejecución</param>
         /// <param name="queryResult">Type string - Cadena de texto con el restultado de la ejecución</param> 
         /// <returns>Devuelve true/false en función de si se ejecuta correctamente.</returns>
         ///
-        public bool Execute(SqlCommand sqlCommand, ref DataTable dt, out string queryResult)
+        public bool Execute(SqlCommand sqlCommand, ref DataTable dataTable, out string queryResult)
         {
             SqlDataAdapter dataAdapter = new SqlDataAdapter();
             bool salida;
@@ -423,11 +519,12 @@ namespace GMS.LIB.DataAccess
             {
                 sqlCommand.Connection = _objCn;
 
-
+                string commandText = sqlCommand.CommandText.ToUpper();
+                string initialCommand = commandText.Trim().Substring(0, 6);
                 if (
-                    sqlCommand.CommandText.ToUpper().Contains("DELETE") ||
-                    sqlCommand.CommandText.ToUpper().Contains("UPDATE") ||
-                    sqlCommand.CommandText.ToUpper().Contains("INSERT")
+                    initialCommand.Contains("DELETE") ||
+                    initialCommand.Contains("UPDATE") ||
+                    initialCommand.Contains("INSERT")
                     )
                 {
                     isNonQuery = true;
@@ -441,29 +538,30 @@ namespace GMS.LIB.DataAccess
                 {
                     //El objeto DataAdapter .NET de proveedor de datos está ajustado para leer registros en un objeto DataSet
                     dataAdapter = new SqlDataAdapter(sqlCommand);
-                    queryResult = dataAdapter.Fill(dt).ToString();
+                    queryResult = dataAdapter.Fill(dataTable).ToString();
                 }
 
                 salida = true;
 
-                CheckResult(queryResult, ref salida);
+                bool timeoutPatterIsFound = false;
+                CheckResult(ref queryResult, out timeoutPatterIsFound);
 
-                if (salida)
+                if (timeoutPatterIsFound)
                 {
-                    salida = Execute(sqlCommand, ref dt, out queryResult);
+                    salida = Execute(sqlCommand, ref dataTable, out queryResult);
                 }
             }
             catch (Exception ex)
             {
                 salida = false;
-                this.CadenaError = ex.Message;
-                queryResult = this.CadenaError;
+                queryResult = ex.Message + "-" + sqlCommand.CommandText;
 
-                CheckResult(queryResult, ref salida);
+                bool timeoutPatterIsFound = false;
+                CheckResult(ref queryResult, out timeoutPatterIsFound);
 
-                if (salida)
+                if (timeoutPatterIsFound)
                 {
-                    salida = Execute(sqlCommand, ref dt, out queryResult);
+                    salida = Execute(sqlCommand, ref dataTable, out queryResult);
                 }
             }
             finally
@@ -471,6 +569,8 @@ namespace GMS.LIB.DataAccess
                 dataAdapter.Dispose();
             }
 
+            _error = queryResult;
+
             return salida;
         }
 
@@ -478,10 +578,81 @@ namespace GMS.LIB.DataAccess
         /// 
         /// </summary>
         /// <param name="sqlCommand"></param>
-        /// <param name="dt"></param>
+        /// <param name="dataSet"></param>
         /// <param name="queryResult"></param>
         /// <returns></returns>
-        public bool Execute(OleDbCommand sqlCommand, ref DataTable dt, out string queryResult)
+        public bool Execute(SqlCommand sqlCommand, ref DataSet dataSet, out string queryResult)
+        {
+            SqlDataAdapter dataAdapter = new SqlDataAdapter();
+            bool salida;
+            bool isNonQuery = false;
+            try
+            {
+                sqlCommand.Connection = _objCn;
+
+                string commandText = sqlCommand.CommandText.ToUpper();
+                string initialCommand = commandText.Trim().Substring(0, 6);
+                if (
+                    initialCommand.Contains("DELETE") ||
+                    initialCommand.Contains("UPDATE") ||
+                    initialCommand.Contains("INSERT")
+                    )
+                {
+                    isNonQuery = true;
+                }
+
+                if (isNonQuery)
+                {
+                    queryResult = sqlCommand.ExecuteNonQuery().ToString();
+                }
+                else
+                {
+                    //El objeto DataAdapter .NET de proveedor de datos está ajustado para leer registros en un objeto DataSet
+                    dataAdapter = new SqlDataAdapter(sqlCommand);
+                    queryResult = dataAdapter.Fill(dataSet).ToString();
+                }
+
+                salida = true;
+
+                bool timeoutPatterIsFound = false;
+                CheckResult(ref queryResult, out timeoutPatterIsFound);
+
+                if (timeoutPatterIsFound)
+                {
+                    salida = Execute(sqlCommand, ref dataSet, out queryResult);
+                }
+            }
+            catch (Exception ex)
+            {
+                salida = false;
+                queryResult = ex.Message + "-" + sqlCommand.CommandText;
+
+                bool timeoutPatterIsFound = false;
+                CheckResult(ref queryResult, out timeoutPatterIsFound);
+
+                if (timeoutPatterIsFound)
+                {
+                    salida = Execute(sqlCommand, ref dataSet, out queryResult);
+                }
+            }
+            finally
+            {
+                dataAdapter.Dispose();
+            }
+
+            _error = queryResult;
+
+            return salida;
+        }
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sqlCommand"></param>
+        /// <param name="dataTable"></param>
+        /// <param name="queryResult"></param>
+        /// <returns></returns>
+        public bool Execute(OleDbCommand sqlCommand, ref DataTable dataTable, out string queryResult)
         {
             OleDbDataAdapter dataAdapter;
             bool salida;
@@ -491,11 +662,12 @@ namespace GMS.LIB.DataAccess
             {
                 sqlCommand.Connection = _objOleCn;
 
-
+                string commandText = sqlCommand.CommandText.ToUpper();
+                string initialCommand = commandText.Trim().Substring(0, 6);
                 if (
-                    sqlCommand.CommandText.ToUpper().Contains("DELETE") ||
-                    sqlCommand.CommandText.ToUpper().Contains("UPDATE") ||
-                    sqlCommand.CommandText.ToUpper().Contains("INSERT")
+                    initialCommand.Contains("DELETE") ||
+                    initialCommand.Contains("UPDATE") ||
+                    initialCommand.Contains("INSERT")
                     )
                 {
                     isNonQuery = true;
@@ -509,32 +681,36 @@ namespace GMS.LIB.DataAccess
                 {
                     //El objeto DataAdapter .NET de proveedor de datos está ajustado para leer registros en un objeto DataSet
                     dataAdapter = new OleDbDataAdapter(sqlCommand);
-                    queryResult = dataAdapter.Fill(dt).ToString();
+                    queryResult = dataAdapter.Fill(dataTable).ToString();
                 }
 
 
                 salida = true;
 
-                CheckResult(queryResult, ref salida);
+                bool timeoutPatterIsFound = false;
+                CheckResult(ref queryResult, out timeoutPatterIsFound);
 
-                if (salida)
+                if (timeoutPatterIsFound)
                 {
-                    salida = Execute(sqlCommand, ref dt, out queryResult);
+                    salida = Execute(sqlCommand, ref dataTable, out queryResult);
                 }
             }
             catch (Exception ex)
             {
                 salida = false;
-                this.CadenaError = ex.Message;
-                queryResult = this.CadenaError;
+                queryResult = ex.Message + "-" + sqlCommand.CommandText;
 
-                CheckResult(queryResult, ref salida);
+                bool timeoutPatterIsFound = false;
+                CheckResult(ref queryResult, out timeoutPatterIsFound);
 
-                if (salida)
+                if (timeoutPatterIsFound)
                 {
-                    salida = Execute(sqlCommand, ref dt, out queryResult);
+                    salida = Execute(sqlCommand, ref dataTable, out queryResult);
                 }
             }
+
+            _error = queryResult;
+
             return salida;
         }
 
@@ -542,10 +718,10 @@ namespace GMS.LIB.DataAccess
         /// 
         /// </summary>
         /// <param name="sqlCommand"></param>
-        /// <param name="ds"></param>
+        /// <param name="dataSet"></param>
         /// <param name="queryResult"></param>
         /// <returns></returns>
-        public bool Execute(OleDbCommand sqlCommand, ref DataSet ds, out string queryResult)
+        public bool Execute(OleDbCommand sqlCommand, ref DataSet dataSet, out string queryResult)
         {
             OleDbDataAdapter dataAdapter;
             bool salida;
@@ -555,11 +731,12 @@ namespace GMS.LIB.DataAccess
             {
                 sqlCommand.Connection = _objOleCn;
 
-
+                string commandText = sqlCommand.CommandText.ToUpper();
+                string initialCommand = commandText.Trim().Substring(0, 6);
                 if (
-                    sqlCommand.CommandText.ToUpper().Contains("DELETE") ||
-                    sqlCommand.CommandText.ToUpper().Contains("UPDATE") ||
-                    sqlCommand.CommandText.ToUpper().Contains("INSERT")
+                    initialCommand.Contains("DELETE") ||
+                    initialCommand.Contains("UPDATE") ||
+                    initialCommand.Contains("INSERT")
                     )
                 {
                     isNonQuery = true;
@@ -573,32 +750,36 @@ namespace GMS.LIB.DataAccess
                 {
                     //El objeto DataAdapter .NET de proveedor de datos está ajustado para leer registros en un objeto DataSet
                     dataAdapter = new OleDbDataAdapter(sqlCommand);
-                    queryResult = dataAdapter.Fill(ds).ToString();
+                    queryResult = dataAdapter.Fill(dataSet).ToString();
                 }
 
 
                 salida = true;
 
-                CheckResult(queryResult, ref salida);
+                bool timeoutPatterIsFound = false;
+                CheckResult(ref queryResult, out timeoutPatterIsFound);
 
-                if (salida)
+                if (timeoutPatterIsFound)
                 {
-                    salida = Execute(sqlCommand, ref ds, out queryResult);
+                    salida = Execute(sqlCommand, ref dataSet, out queryResult);
                 }
             }
             catch (Exception ex)
             {
                 salida = false;
-                this.CadenaError = ex.Message;
-                queryResult = this.CadenaError;
+                queryResult = ex.Message + "-" + sqlCommand.CommandText;
 
-                CheckResult(queryResult, ref salida);
+                bool timeoutPatterIsFound = false;
+                CheckResult(ref queryResult, out timeoutPatterIsFound);
 
-                if (salida)
+                if (timeoutPatterIsFound)
                 {
-                    salida = Execute(sqlCommand, ref ds, out queryResult);
+                    salida = Execute(sqlCommand, ref dataSet, out queryResult);
                 }
             }
+
+            _error = queryResult;
+
             return salida;
         }
         
@@ -606,68 +787,81 @@ namespace GMS.LIB.DataAccess
         /// 
         /// </summary>
         /// <param name="query">string query</param>
-        /// <param name="dt"></param>
+        /// <param name="dataTable"></param>
         /// <param name="queryResult"></param>
         /// <returns></returns>
-        public bool ExecuteStandAlone(string query, ref DataTable dt, out string queryResult)
+        public bool ExecuteStandAlone(string query, ref DataTable dataTable, out string queryResult)
         {
             bool salida;
             bool isNonQuery = false;
 
             try
             {
-                OpenSqlConnection();
 
-                if (
-                    query.ToUpper().Contains("DELETE") ||
-                    query.ToUpper().Contains("UPDATE") ||
-                    query.ToUpper().Contains("INSERT")
-                    )
+                using (SqlConnection conn = new SqlConnection(_strConnectionString))
                 {
-                    isNonQuery = true;
-                }
+                    conn.Open();
 
-                if (isNonQuery)
-                {
-                    SqlCommand sqlCommand = new SqlCommand(query, this._objCn);
+                    using (SqlCommand sqlCommand = new SqlCommand(query.ToString(), conn))
+                    {
+                        string commandText = sqlCommand.CommandText.ToUpper();
+                        string initialCommand = commandText.Trim().Substring(0, 6);
+                        if (
+                            initialCommand.Contains("DELETE") ||
+                            initialCommand.Contains("UPDATE") ||
+                            initialCommand.Contains("INSERT")
+                            )
+                        {
+                            isNonQuery = true;
+                        }
 
-                    queryResult = sqlCommand.ExecuteNonQuery().ToString();
-                }
-                else
-                {
-                    //El objeto DataAdapter .NET de proveedor de datos está ajustado para leer registros en un objeto DataSet
-                    SqlDataAdapter dataAdapter = new SqlDataAdapter(query, this._objCn);
-                    queryResult = dataAdapter.Fill(dt).ToString();
-                }
+                        if (isNonQuery)
+                        {
+                            queryResult = sqlCommand.ExecuteNonQuery().ToString();
+                        }
+                        else
+                        {
+                            //El objeto DataAdapter .NET de proveedor de datos está ajustado para leer registros en un objeto DataSet.
+                            //Este tipo de consulta, sólo devuelve resultados en queryResult si es una SELECT.
+                            using (SqlDataAdapter DataAdapter = new SqlDataAdapter(sqlCommand))
+                            {
+                                queryResult = DataAdapter.Fill(dataTable).ToString();
+                            }
+                        }
 
-                salida = true;
+                        salida = true;
 
-                CloseSqlConnection();
+                    }
 
-                CheckResult(queryResult, ref salida);
+                    conn.Close();
 
-                if (salida)
-                {
-                    salida = ExecuteStandAlone(query, ref dt, out queryResult);
+                    bool timeoutPatterIsFound = false;
+                    CheckResult(ref queryResult, out timeoutPatterIsFound);
+
+                    if (timeoutPatterIsFound)
+                    {
+                        salida = ExecuteStandAlone(query, ref dataTable, out queryResult);
+                    }
                 }
 
             }
             catch (Exception ex)
             {
                 salida = false;
-                this.CadenaError = ex.Message;
-                queryResult = this.CadenaError;
+                queryResult = ex.Message + "-" + query;
 
-                CloseSqlConnection();
+                bool timeoutPatterIsFound = false;
+                CheckResult(ref queryResult, out timeoutPatterIsFound);
 
-                CheckResult(queryResult, ref salida);
-
-                if (salida)
+                if (timeoutPatterIsFound)
                 {
-                    salida = ExecuteStandAlone(query, ref dt, out queryResult);
+                    salida = ExecuteStandAlone(query, ref dataTable, out queryResult);
                 }
 
+
             }
+
+            _error = queryResult;
 
             return salida;
         }
@@ -675,27 +869,112 @@ namespace GMS.LIB.DataAccess
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="sqlCommand">OleDB command</param>
-        /// <param name="dt"></param>
+        /// <param name="query"></param>
+        /// <param name="dataSet"></param>
         /// <param name="queryResult"></param>
         /// <returns></returns>
-        public bool ExecuteStandAlone(OleDbCommand sqlCommand, ref DataTable dt, out string queryResult)
+        public bool ExecuteStandAlone(string query, ref DataSet dataSet, out string queryResult)
         {
-            OleDbDataAdapter dataAdapter;
             bool salida;
             bool isNonQuery = false;
 
             try
             {
-                OpenOleDbConnection();
 
-                sqlCommand.Connection = _objOleCn;
+                using (SqlConnection conn = new SqlConnection(_strConnectionString))
+                {
+                    conn.Open();
+
+                    using (SqlCommand sqlCommand = new SqlCommand(query.ToString(), conn))
+                    {
+                        string commandText = sqlCommand.CommandText.ToUpper();
+                        string initialCommand = commandText.Trim().Substring(0, 6);
+                        if (
+                            initialCommand.Contains("DELETE") ||
+                            initialCommand.Contains("UPDATE") ||
+                            initialCommand.Contains("INSERT")
+                            )
+                        {
+                            isNonQuery = true;
+                        }
+
+                        if (isNonQuery)
+                        {
+                            queryResult = sqlCommand.ExecuteNonQuery().ToString();
+                        }
+                        else
+                        {
+                            //El objeto DataAdapter .NET de proveedor de datos está ajustado para leer registros en un objeto DataSet.
+                            //Este tipo de consulta, sólo devuelve resultados en queryResult si es una SELECT.
+                            using (SqlDataAdapter DataAdapter = new SqlDataAdapter(sqlCommand))
+                            {
+                                queryResult = DataAdapter.Fill(dataSet).ToString();
+                            }
+                        }
+
+                        salida = true;
+
+                    }
+
+                    conn.Close();
+
+                    bool timeoutPatterIsFound = false;
+                    CheckResult(ref queryResult, out timeoutPatterIsFound);
+
+                    if (timeoutPatterIsFound)
+                    {
+                        salida = ExecuteStandAlone(query, ref dataSet, out queryResult);
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                salida = false;
+                queryResult = ex.Message + "-" + query;
+
+                bool timeoutPatterIsFound = false;
+                CheckResult(ref queryResult, out timeoutPatterIsFound);
+
+                if (timeoutPatterIsFound)
+                {
+                    salida = ExecuteStandAlone(query, ref dataSet, out queryResult);
+                }
 
 
+            }
+
+            _error = queryResult;
+
+            return salida;
+        }
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sqlCommand">Sql Command</param>
+        /// <param name="dataTable"></param>
+        /// <param name="queryResult"></param>
+        /// <returns></returns>
+        public bool ExecuteStandAlone(SqlCommand sqlCommand, ref DataTable dataTable, out string queryResult)
+        {
+            SqlDataAdapter dataAdapter;
+            bool salida;
+            bool isNonQuery = false;
+
+            try
+            {
+                OpenSqlConnection();
+
+                sqlCommand.Connection = _objCn;
+
+                string commandText = sqlCommand.CommandText.ToUpper();
+                string initialCommand = commandText.Trim().Substring(0, 6);
                 if (
-                    sqlCommand.CommandText.ToUpper().Contains("DELETE") ||
-                    sqlCommand.CommandText.ToUpper().Contains("UPDATE") ||
-                    sqlCommand.CommandText.ToUpper().Contains("INSERT")
+                    initialCommand.Contains("DELETE") ||
+                    initialCommand.Contains("UPDATE") ||
+                    initialCommand.Contains("INSERT")
                     )
                 {
                     isNonQuery = true;
@@ -707,40 +986,192 @@ namespace GMS.LIB.DataAccess
                 }
                 else
                 {
-                    //El objeto DataAdapter .NET de proveedor de datos está ajustado para leer registros en un objeto DataSet
-                    dataAdapter = new OleDbDataAdapter(sqlCommand);
-                    queryResult = dataAdapter.Fill(dt).ToString();
+                    dataAdapter = new SqlDataAdapter(sqlCommand);
+                    queryResult = dataAdapter.Fill(dataTable).ToString();
                 }
-
+                
                 salida = true;
 
-                CloseOleDbConnection();
+                CloseSqlConnection();
 
-                CheckResult(queryResult, ref salida);
+                bool timeoutPatterIsFound = false;
+                CheckResult(ref queryResult, out timeoutPatterIsFound);
 
-                if (salida)
+                if (timeoutPatterIsFound)
                 {
-                    salida = Execute(sqlCommand, ref dt, out queryResult);
+                    salida = ExecuteStandAlone(sqlCommand, ref dataTable, out queryResult);
                 }
             }
             catch (Exception ex)
             {
                 salida = false;
-                this.CadenaError = ex.Message;
-                queryResult = this.CadenaError;
+                queryResult = ex.Message + "-" + sqlCommand.CommandText;
+                bool timeoutPatterIsFound = false;
+                CheckResult(ref queryResult, out timeoutPatterIsFound);
 
-                CheckResult(queryResult, ref salida);
-
-                if (salida)
+                if (timeoutPatterIsFound)
                 {
-                    salida = Execute(sqlCommand, ref dt, out queryResult);
+                    salida = ExecuteStandAlone(sqlCommand, ref dataTable, out queryResult);
                 }
-
             }
             finally
             {
-                CloseOleDbConnection();
+                CloseSqlConnection();
+                sqlCommand.Dispose();
             }
+
+            _error = queryResult;
+
+            return salida;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sqlCommand">Sql Command</param>
+        /// <param name="dataSet"></param>
+        /// <param name="queryResult"></param>
+        /// <returns></returns>
+        public bool ExecuteStandAlone(SqlCommand sqlCommand, ref DataSet dataSet, out string queryResult)
+        {
+            SqlDataAdapter dataAdapter;
+            bool salida;
+            bool isNonQuery = false;
+
+            try
+            {
+                OpenSqlConnection();
+
+                sqlCommand.Connection = _objCn;
+
+                string commandText = sqlCommand.CommandText.ToUpper();
+                string initialCommand = commandText.Trim().Substring(0, 6);
+                if (
+                    initialCommand.Contains("DELETE") ||
+                    initialCommand.Contains("UPDATE") ||
+                    initialCommand.Contains("INSERT")
+                    )
+                {
+                    isNonQuery = true;
+                }
+
+                if (isNonQuery)
+                {
+                    queryResult = sqlCommand.ExecuteNonQuery().ToString();
+                }
+                else
+                {
+                    dataAdapter = new SqlDataAdapter(sqlCommand);
+                    queryResult = dataAdapter.Fill(dataSet).ToString();
+                }
+
+                salida = true;
+
+                CloseSqlConnection();
+
+                bool timeoutPatterIsFound = false;
+                CheckResult(ref queryResult, out timeoutPatterIsFound);
+
+                if (timeoutPatterIsFound)
+                {
+                    salida = ExecuteStandAlone(sqlCommand, ref dataSet, out queryResult);
+                }
+            }
+            catch (Exception ex)
+            {
+                salida = false;
+                queryResult = ex.Message + "-" + sqlCommand.CommandText;
+                bool timeoutPatterIsFound = false;
+                CheckResult(ref queryResult, out timeoutPatterIsFound);
+
+                if (timeoutPatterIsFound)
+                {
+                    salida = ExecuteStandAlone(sqlCommand, ref dataSet, out queryResult);
+                }
+            }
+            finally
+            {
+                CloseSqlConnection();
+                sqlCommand.Dispose();
+            }
+
+            _error = queryResult;
+
+            return salida;
+        }
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sqlCommand">OleDB command</param>
+        /// <param name="dataTable"></param>
+        /// <param name="queryResult"></param>
+        /// <returns></returns>
+        public bool ExecuteStandAlone(OleDbCommand sqlCommand, ref DataTable dataTable, out string queryResult)
+        {
+            OleDbDataAdapter dataAdapter;
+            bool salida;
+            bool isNonQuery = false;
+
+            try
+            {
+                OpenSqlConnection();
+
+                sqlCommand.Connection = _objOleCn;
+
+                string commandText = sqlCommand.CommandText.ToUpper();
+                string initialCommand = commandText.Trim().Substring(0, 6);
+                if (
+                    initialCommand.Contains("DELETE") ||
+                    initialCommand.Contains("UPDATE") ||
+                    initialCommand.Contains("INSERT")
+                    )
+                {
+                    isNonQuery = true;
+                }
+
+                if (isNonQuery)
+                {
+                    queryResult = sqlCommand.ExecuteNonQuery().ToString();
+                }
+                else
+                {
+                    dataAdapter = new OleDbDataAdapter(sqlCommand);
+                    queryResult = dataAdapter.Fill(dataTable).ToString();
+                }
+
+                salida = true;
+
+                CloseSqlConnection();
+
+                bool timeoutPatterIsFound = false;
+                CheckResult(ref queryResult, out timeoutPatterIsFound);
+
+                if (timeoutPatterIsFound)
+                {
+                    salida = ExecuteStandAlone(sqlCommand, ref dataTable, out queryResult);
+                }
+            }
+            catch (Exception ex)
+            {
+                salida = false;
+                queryResult = ex.Message + "-" + sqlCommand.CommandText;
+                bool timeoutPatterIsFound = false;
+                CheckResult(ref queryResult, out timeoutPatterIsFound);
+
+                if (timeoutPatterIsFound)
+                {
+                    salida = ExecuteStandAlone(sqlCommand, ref dataTable, out queryResult);
+                }
+            }
+            finally
+            {
+                CloseSqlConnection();
+                sqlCommand.Dispose();
+            }
+
+            _error = queryResult;
 
             return salida;
         }
@@ -752,7 +1183,7 @@ namespace GMS.LIB.DataAccess
         /// <param name="dataset"></param>
         /// <param name="queryResult"></param>
         /// <returns></returns>
-        public bool ExecuteStandAlone(OleDbCommand sqlCommand, ref DataSet dataset, out string queryResult)
+        public bool ExecuteStandAlone(OleDbCommand sqlCommand, ref DataSet dataSet, out string queryResult)
         {
             OleDbDataAdapter dataAdapter;
             bool salida;
@@ -760,15 +1191,16 @@ namespace GMS.LIB.DataAccess
 
             try
             {
-                OpenOleDbConnection();
+                OpenSqlConnection();
 
                 sqlCommand.Connection = _objOleCn;
 
-
+                string commandText = sqlCommand.CommandText.ToUpper();
+                string initialCommand = commandText.Trim().Substring(0, 6);
                 if (
-                    sqlCommand.CommandText.ToUpper().Contains("DELETE") ||
-                    sqlCommand.CommandText.ToUpper().Contains("UPDATE") ||
-                    sqlCommand.CommandText.ToUpper().Contains("INSERT")
+                    initialCommand.Contains("DELETE") ||
+                    initialCommand.Contains("UPDATE") ||
+                    initialCommand.Contains("INSERT")
                     )
                 {
                     isNonQuery = true;
@@ -780,178 +1212,33 @@ namespace GMS.LIB.DataAccess
                 }
                 else
                 {
-                    //El objeto DataAdapter .NET de proveedor de datos está ajustado para leer registros en un objeto DataSet
                     dataAdapter = new OleDbDataAdapter(sqlCommand);
-                    queryResult = dataAdapter.Fill(dataset).ToString();
+                    queryResult = dataAdapter.Fill(dataSet).ToString();
                 }
 
                 salida = true;
 
-                CloseOleDbConnection();
+                CloseSqlConnection();
 
-                CheckResult(queryResult, ref salida);
+                bool timeoutPatterIsFound = false;
+                CheckResult(ref queryResult, out timeoutPatterIsFound);
 
-                if (salida)
+                if (timeoutPatterIsFound)
                 {
-                    salida = Execute(sqlCommand, ref dataset, out queryResult);
+                    salida = ExecuteStandAlone(sqlCommand, ref dataSet, out queryResult);
                 }
             }
             catch (Exception ex)
             {
                 salida = false;
-                this.CadenaError = ex.Message;
-                queryResult = this.CadenaError;
+                queryResult = ex.Message + "-" + sqlCommand.CommandText;
+                bool timeoutPatterIsFound = false;
+                CheckResult(ref queryResult, out timeoutPatterIsFound);
 
-                CheckResult(queryResult, ref salida);
-
-                if (salida)
+                if (timeoutPatterIsFound)
                 {
-                    salida = Execute(sqlCommand, ref dataset, out queryResult);
+                    salida = ExecuteStandAlone(sqlCommand, ref dataSet, out queryResult);
                 }
-
-            }
-            finally
-            {
-                CloseOleDbConnection();
-            }
-
-            return salida;
-        }
-        
-        /// <summary>
-        /// Return DataSet
-        /// </summary>
-        /// <param name="sqlCommand"></param>
-        /// <param name="ds"></param>
-        /// <param name="queryResult"></param>
-        /// <returns></returns>
-        public bool ExecuteStandAlone(SqlCommand sqlCommand, ref DataSet ds, out string queryResult)
-        {
-            SqlDataAdapter dataAdapter;
-            bool salida;
-            bool isNonQuery = false;
-
-            try
-            {
-                OpenSqlConnection();
-
-                sqlCommand.Connection = _objCn;
-
-                if (
-                    sqlCommand.CommandText.ToUpper().Contains("DELETE") ||
-                    sqlCommand.CommandText.ToUpper().Contains("UPDATE") ||
-                    sqlCommand.CommandText.ToUpper().Contains("INSERT")
-                )
-                {
-                    isNonQuery = true;
-                }
-
-                if (isNonQuery)
-                {
-                    queryResult = sqlCommand.ExecuteNonQuery().ToString();
-                }
-                else
-                {
-                    dataAdapter = new SqlDataAdapter(sqlCommand);
-                    queryResult = dataAdapter.Fill(ds).ToString();
-                }
-
-
-                salida = true;
-
-                CloseSqlConnection();
-
-                CheckResult(queryResult, ref salida);
-
-                if (salida)
-                {
-                    salida = ExecuteStandAlone(sqlCommand, ref ds, out queryResult);
-                }
-
-            }
-            catch (Exception ex)
-            {
-                salida = false;
-                this.CadenaError = ex.Message;
-                queryResult = this.CadenaError;
-
-                CloseSqlConnection();
-
-                CheckResult(queryResult, ref salida);
-
-                if (salida)
-                {
-                    salida = ExecuteStandAlone(sqlCommand, ref ds, out queryResult);
-                }
-
-            }
-            return salida;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sqlCommand">Sql Command</param>
-        /// <param name="dt"></param>
-        /// <param name="queryResult"></param>
-        /// <returns></returns>
-        public bool ExecuteStandAlone(SqlCommand sqlCommand, ref DataTable dt, out string queryResult)
-        {
-            SqlDataAdapter dataAdapter;
-            bool salida;
-            bool isNonQuery = false;
-
-            try
-            {
-                OpenSqlConnection();
-
-                sqlCommand.Connection = _objCn;
-
-                if (
-                    sqlCommand.CommandText.ToUpper().Contains("DELETE") || 
-                    sqlCommand.CommandText.ToUpper().Contains("UPDATE") ||
-                    sqlCommand.CommandText.ToUpper().Contains("INSERT")
-                    ) 
-                {
-                    isNonQuery = true;
-                }
-
-                if (isNonQuery)
-                {
-                    queryResult = sqlCommand.ExecuteNonQuery().ToString();
-                }
-                else
-                {
-                    dataAdapter = new SqlDataAdapter(sqlCommand);
-                    queryResult = dataAdapter.Fill(dt).ToString();
-                }
-                
-                salida = true;
-
-                CloseSqlConnection();
-
-                CheckResult(queryResult, ref salida);
-
-                if (salida)
-                {
-                    salida = ExecuteStandAlone(sqlCommand, ref dt, out queryResult);
-                }
-            }
-            catch (Exception ex)
-            {
-                salida = false;
-                this.CadenaError = ex.Message;
-                queryResult = this.CadenaError;
-
-                CloseSqlConnection();
-
-                CheckResult(queryResult, ref salida);
-
-                if (salida)
-                {
-                    salida = ExecuteStandAlone(sqlCommand, ref dt, out queryResult);
-                }
-
             }
             finally
             {
@@ -959,8 +1246,11 @@ namespace GMS.LIB.DataAccess
                 sqlCommand.Dispose();
             }
 
+            _error = queryResult;
+
             return salida;
         }
+
 
 
         #endregion "PublicMethdos"
@@ -978,7 +1268,7 @@ namespace GMS.LIB.DataAccess
             {
                 if (this._objCn == null)
                 {
-                    _objCn = new SqlConnection(this.StrConnectionString);
+                    _objCn = new SqlConnection(this._strConnectionString);
                 }
 
                 this._objCn.Open();
@@ -992,7 +1282,7 @@ namespace GMS.LIB.DataAccess
 
             catch (Exception ex)
             {
-                this.CadenaError = ex.Message;
+                this._error = ex.Message;
                 this._conectado = false;
                 return false;
             }
@@ -1095,7 +1385,7 @@ namespace GMS.LIB.DataAccess
             catch (Exception ex)
             {
                 salida = false;
-                this.CadenaError = ex.Message;
+                this._error = ex.Message;
             }
             return salida;
         }
@@ -1120,7 +1410,7 @@ namespace GMS.LIB.DataAccess
             }
             catch (Exception ex)
             {
-                this.CadenaError = ex.Message;
+                this._error = ex.Message;
                 idInsert = -1;
             }
             return idInsert;
@@ -1145,7 +1435,7 @@ namespace GMS.LIB.DataAccess
             }
             catch (Exception ex)
             {
-                this.CadenaError = ex.Message;
+                this._error = ex.Message;
                 salida = false;
             }
             return salida;
@@ -1170,7 +1460,7 @@ namespace GMS.LIB.DataAccess
             }
             catch (Exception ex)
             {
-                this.CadenaError = ex.Message;
+                this._error = ex.Message;
                 idInsert = -1;
             }
             return idInsert;
@@ -1178,16 +1468,6 @@ namespace GMS.LIB.DataAccess
 
 
         #region NotImplemented
-
-        /// <summary>
-        /// NotImplemented
-        /// </summary>
-        /// <param name="strConnectionString"></param>
-        /// <returns></returns>
-        public bool FnCreateDataBase(string strConnectionString)
-        {
-            throw new NotImplementedException();
-        }
 
         /// <summary>
         /// NotImplemented
@@ -1220,18 +1500,6 @@ namespace GMS.LIB.DataAccess
         /// <param name="queryResult"></param>
         /// <returns></returns>
         public bool Execute(SQLiteCommand sqlCommand, ref DataSet dataset, out string queryResult)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// NotImplemented
-        /// </summary>
-        /// <param name="query"></param>
-        /// <param name="dataset"></param>
-        /// <param name="queryResult"></param>
-        /// <returns></returns>
-        public bool ExecuteStandAlone(string query, ref DataSet dataset, out string queryResult)
         {
             throw new NotImplementedException();
         }
@@ -1277,26 +1545,6 @@ namespace GMS.LIB.DataAccess
         /// <param name="strConnectionString"></param>
         /// <param name="queryResult"></param>
         public void ForceDataBaseUpdate(string strConnectionString, out string queryResult)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// NotImplemented
-        /// </summary>
-        /// <returns></returns>
-
-        public bool Execute(string query, ref DataSet dataset, out string queryResult)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// NotImplemented
-        /// </summary>
-        /// <returns></returns>
-
-        public bool Execute(SqlCommand sqlCommand, ref DataSet dataset, out string queryResult)
         {
             throw new NotImplementedException();
         }

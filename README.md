@@ -16,6 +16,40 @@ If you want to learn more about creating good readme files then refer the follow
 - [Visual Studio Code](https://github.com/Microsoft/vscode)
 - [Chakra Core](https://github.com/Microsoft/ChakraCore)
 
+# ChangeLog
+- 1.0.7 - 2019/09/06:
+
+Unit Test de errores de los metodos de SQLserver.
+
+Error unit test of SQLserver methods.
+
+- 1.0.6 - 2019/09/04:
+
+Unit Test de los metodos de SQLserver y mejorar las funciones SQLserver cuando se generan timeouts.
+
+Unit Test of SQLserver methods and improve the SQLServer timeout methods.
+
+-------------------------------------------------------
+- 1.0.5 - 2019/08/25:
+
+Evitar el uso de slow-cheetah por los problemas que está causando la version 3.2.20
+
+Avoid using slow-cheetah due to the error on transformation in version 3.2.20
+
+-------------------------------------------------------
+- 1.0.0.4 - 2019/08/18:
+
+Mejora de las reconexiones y creados los métodos de creación de una base de datos access.
+
+Reconnection improvements and MSAccess database creation methods.
+
+-------------------------------------------------------
+
+
+
+
+# Basis
+
 ## SQLite management
 ### Introduction
 SQLite is a portable database, very usefull when you have limited resources and installation permissions.

@@ -649,9 +649,6 @@ namespace GMS.LIB.DataAccess
 
             try
             {
-
-                //using (SQLiteConnection conn = new SQLiteConnection(_strConnectionString))
-                //{
                 using (SQLiteCommand sqLiteCommand = new SQLiteCommand(sProcedure.ToString(), _objCn))
                 {
                     string commandText = sProcedure.ToUpper();
@@ -662,13 +659,6 @@ namespace GMS.LIB.DataAccess
                         initialCommand.Contains("INSERT")
                         )
                     {
-
-                        //if (
-                        //    sProcedure.ToUpper().Contains("DELETE") ||
-                        //    sProcedure.ToUpper().Contains("UPDATE") ||
-                        //    sProcedure.ToUpper().Contains("INSERT")
-                        //    )
-                        //{
                         isNonQuery = true;
                     }
 
